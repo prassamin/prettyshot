@@ -1,6 +1,12 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  type Variants,
+} from "framer-motion";
 import {
   Sparkles,
   Download,
@@ -16,14 +22,14 @@ import { useRouter } from "@bprogress/next";
 
 /* ─── animation helpers ─── */
 
-const stagger = {
+const stagger: Variants = {
   hidden: {},
   visible: {
     transition: { staggerChildren: 0.08, delayChildren: 0.2 },
   },
 };
 
-const wordPop = {
+const wordPop: Variants = {
   hidden: { opacity: 0, y: 30, filter: "blur(8px)" },
   visible: {
     opacity: 1,
@@ -33,7 +39,7 @@ const wordPop = {
   },
 };
 
-const fadeUp = (delay = 0) => ({
+const fadeUp = (delay = 0): Variants => ({
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -47,7 +53,7 @@ const float = (delay: number, y: number) => ({
   transition: {
     duration: 4 + delay,
     repeat: Infinity,
-    ease: "easeInOut",
+    ease: "easeInOut" as const,
     delay,
   },
 });
