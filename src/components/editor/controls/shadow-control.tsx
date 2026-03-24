@@ -18,10 +18,8 @@ const QUICK_COLORS = [
 ];
 
 export function ShadowControl() {
-  const shadowPreset = useEditorStore((s) => s.shadowPreset);
-  const setShadowPreset = useEditorStore((s) => s.setShadowPreset);
-  const shadowColor = useEditorStore((s) => s.shadowColor);
-  const setShadowColor = useEditorStore((s) => s.setShadowColor);
+  const { shadowPreset, setShadowPreset, shadowColor, setShadowColor } =
+    useEditorStore();
 
   /** Resolve template for swatch preview */
   const resolveStyle = (template: string, color: string) =>

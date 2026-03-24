@@ -5,8 +5,7 @@ import { useEditorStore } from "@/stores/editor-store";
 const QUICK_PRESETS = [0, 8, 16, 24, 48];
 
 export function RadiusControl() {
-  const borderRadius = useEditorStore((s) => s.borderRadius);
-  const setBorderRadius = useEditorStore((s) => s.setBorderRadius);
+  const { borderRadius, setBorderRadius } = useEditorStore();
 
   return (
     <div className="space-y-3">

@@ -70,17 +70,17 @@ function FloatingShapes() {
       <motion.div
         animate={{ x: [0, 30, 0], y: [0, -20, 0], scale: [1, 1.1, 1] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-32 -right-32 size-[500px] rounded-full bg-linear-to-br from-orange-200/50 via-rose-200/40 to-transparent blur-3xl"
+        className="absolute -top-32 -right-32 size-125 rounded-full bg-linear-to-br from-orange-200/50 via-rose-200/40 to-transparent blur-3xl"
       />
       <motion.div
         animate={{ x: [0, -20, 0], y: [0, 30, 0], scale: [1, 1.15, 1] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -bottom-40 -left-32 size-[450px] rounded-full bg-linear-to-tr from-violet-200/40 via-fuchsia-100/30 to-transparent blur-3xl"
+        className="absolute -bottom-40 -left-32 size-112.5 rounded-full bg-linear-to-tr from-violet-200/40 via-fuchsia-100/30 to-transparent blur-3xl"
       />
       <motion.div
         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/3 left-1/2 size-[350px] -translate-x-1/2 rounded-full bg-linear-to-br from-amber-100/40 to-pink-100/30 blur-3xl"
+        className="absolute top-1/3 left-1/2 size-87.5 -translate-x-1/2 rounded-full bg-linear-to-br from-amber-100/40 to-pink-100/30 blur-3xl"
       />
 
       {/* Dot grid */}
@@ -152,7 +152,7 @@ function MockScreenshot() {
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-3xl [perspective:1200px]">
+    <div className="relative mx-auto w-full max-w-3xl perspective-distant">
       <motion.div
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -196,12 +196,12 @@ function MockScreenshot() {
                 <div className="size-3 rounded-full bg-[#28c840] shadow-sm shadow-green-500/30" />
               </div>
               <div className="ml-4 flex-1">
-                <div className="mx-auto flex h-6 max-w-[200px] items-center justify-center rounded-lg bg-zinc-800 text-[11px] font-medium text-zinc-400">
+                <div className="mx-auto flex h-6 max-w-50 items-center justify-center rounded-lg bg-zinc-800 text-[11px] font-medium text-zinc-400">
                   <span className="mr-1 text-emerald-400">●</span>
                   prettyshot.app
                 </div>
               </div>
-              <div className="w-[60px]" />
+              <div className="w-15" />
             </div>
 
             {/* Content area — a richer mock dashboard */}

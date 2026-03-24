@@ -28,21 +28,23 @@ function generateNoiseTexture(size = 150): string {
 export function PreviewCanvas() {
   const captureRef = useRef<HTMLDivElement>(null);
 
-  const image = useEditorStore((s) => s.image);
-  const bgType = useEditorStore((s) => s.bgType);
-  const bgGradient = useEditorStore((s) => s.bgGradient);
-  const bgMesh = useEditorStore((s) => s.bgMesh);
-  const bgSolid = useEditorStore((s) => s.bgSolid);
-  const bgImage = useEditorStore((s) => s.bgImage);
-  const padding = useEditorStore((s) => s.padding);
-  const borderRadius = useEditorStore((s) => s.borderRadius);
-  const shadowPreset = useEditorStore((s) => s.shadowPreset);
-  const shadowColor = useEditorStore((s) => s.shadowColor);
-  const aspectRatio = useEditorStore((s) => s.aspectRatio);
-  const noiseOpacity = useEditorStore((s) => s.noiseOpacity);
-  const rotateX = useEditorStore((s) => s.rotateX);
-  const rotateY = useEditorStore((s) => s.rotateY);
-  const rotateZ = useEditorStore((s) => s.rotateZ);
+  const {
+    image,
+    bgType,
+    bgGradient,
+    bgMesh,
+    bgSolid,
+    bgImage,
+    padding,
+    borderRadius,
+    shadowPreset,
+    shadowColor,
+    aspectRatio,
+    noiseOpacity,
+    rotateX,
+    rotateY,
+    rotateZ,
+  } = useEditorStore();
 
   const hasPerspective = rotateX !== 0 || rotateY !== 0 || rotateZ !== 0;
 
@@ -92,7 +94,11 @@ export function PreviewCanvas() {
           ...bgStyle,
           padding: `${padding}px`,
           ...(aspectRatio
-            ? { aspectRatio: `${aspectRatio}`, maxWidth: "100%", maxHeight: "100%" }
+            ? {
+                aspectRatio: `${aspectRatio}`,
+                maxWidth: "100%",
+                maxHeight: "100%",
+              }
             : { maxWidth: "100%", maxHeight: "100%" }),
           width: "fit-content",
           height: "fit-content",
@@ -128,7 +134,9 @@ export function PreviewCanvas() {
             position: "relative",
             zIndex: 1,
             ...(hasPerspective
-              ? { transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)` }
+              ? {
+                  transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`,
+                }
               : {}),
           }}
           draggable={false}

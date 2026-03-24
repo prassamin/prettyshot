@@ -10,21 +10,21 @@ import {
   Copy,
   Download,
   ImagePlus,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@heroui/react";
-import { APP_NAME } from "@/config";
 import { useEditorStore } from "@/stores/editor-store";
 import { captureElement, downloadImage, copyToClipboard } from "@/lib/export";
 
 export function EditorTopbar() {
-  const imageName = useEditorStore((s) => s.imageName);
-  const image = useEditorStore((s) => s.image);
-  const clearImage = useEditorStore((s) => s.clearImage);
-  const exportFormat = useEditorStore((s) => s.exportFormat);
-  const exportScale = useEditorStore((s) => s.exportScale);
-  const setExportFormat = useEditorStore((s) => s.setExportFormat);
-  const setExportScale = useEditorStore((s) => s.setExportScale);
+  const {
+    imageName,
+    image,
+    clearImage,
+    exportFormat,
+    exportScale,
+    setExportFormat,
+    setExportScale,
+  } = useEditorStore();
 
   const [open, setOpen] = useState(false);
   const [exporting, setExporting] = useState(false);

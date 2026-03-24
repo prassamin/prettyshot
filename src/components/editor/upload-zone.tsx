@@ -161,7 +161,7 @@ export function UploadZone() {
                 : "Drop your screenshot here"}
             </motion.p>
             <p className="mt-1.5 text-sm font-medium text-zinc-400">
-              PNG, JPG, or WebP — up to any size
+              PNG, JPG, or WebP - up to any size
             </p>
           </div>
 

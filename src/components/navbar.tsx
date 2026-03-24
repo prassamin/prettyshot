@@ -8,7 +8,6 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { Sparkles } from "lucide-react";
 import { Button } from "@heroui/react";
 import { Github } from "@/components/icons/github";
 import { APP_NAME, APP_GITHUB_URL } from "@/config";
@@ -49,7 +48,7 @@ function SpotlightNav({ children }: { children: React.ReactNode }) {
           style={{ opacity: hovering ? 1 : 0 }}
         >
           <motion.div
-            className="absolute size-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+            className="absolute size-50 -translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{
               left: spotlightX,
               top: spotlightY,
@@ -89,7 +88,7 @@ export function Navbar() {
           <SpotlightNav>
             {/* Animated rotating gradient border */}
             <div
-              className="absolute -inset-[1px] z-0 overflow-hidden rounded-2xl"
+              className="absolute -inset-px z-0 overflow-hidden rounded-2xl"
               style={{
                 background: scrolled
                   ? "linear-gradient(var(--navbar-border-angle, 0deg), rgba(251,146,60,0.3), rgba(244,63,94,0.2), rgba(139,92,246,0.2), rgba(59,130,246,0.1), rgba(251,146,60,0.3))"
@@ -101,7 +100,7 @@ export function Navbar() {
             <nav
               className={`relative z-10 flex items-center justify-between rounded-2xl px-3 py-2 transition-all duration-500 sm:px-5 sm:py-2.5 ${
                 scrolled
-                  ? "bg-white/75 shadow-xl shadow-zinc-900/[0.04] backdrop-blur-2xl"
+                  ? "bg-white/75 shadow-xl shadow-zinc-900/4 backdrop-blur-2xl"
                   : "bg-white/60 backdrop-blur-xl"
               }`}
             >
@@ -110,19 +109,6 @@ export function Navbar() {
                 href="/"
                 className="group relative flex items-center gap-2.5"
               >
-                <div className="relative">
-                  {/* Outer glow ring */}
-                  <div className="absolute -inset-1 rounded-xl bg-linear-to-br from-orange-400 via-rose-400 to-violet-500 opacity-0 blur-lg transition-all duration-500 group-hover:opacity-50" />
-                  {/* Icon container */}
-                  <div className="relative flex size-9 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-orange-400 via-rose-400 to-violet-500 shadow-lg shadow-orange-400/25">
-                    {/* Shine sweep */}
-                    <div className="absolute inset-0 translate-x-[-120%] bg-linear-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-[120%]" />
-                    <Sparkles
-                      className="relative size-4 text-white transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12"
-                      strokeWidth={2.5}
-                    />
-                  </div>
-                </div>
                 <div className="flex flex-col">
                   <span className="text-base leading-tight font-bold tracking-tight text-zinc-800 sm:text-lg">
                     {APP_NAME}
@@ -142,7 +128,7 @@ export function Navbar() {
                       {link.label}
                     </span>
                     {/* Hover pill bg */}
-                    <span className="absolute inset-0 scale-75 rounded-xl bg-zinc-900/[0.04] opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
+                    <span className="absolute inset-0 scale-75 rounded-xl bg-zinc-900/4 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                     {/* Bottom indicator dot */}
                     <span className="absolute bottom-0.5 left-1/2 size-1 -translate-x-1/2 scale-0 rounded-full bg-linear-to-r from-orange-400 to-rose-400 transition-transform duration-300 group-hover:scale-100" />
                   </Link>
@@ -159,7 +145,7 @@ export function Navbar() {
                   className="group relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-zinc-400 transition-all duration-200 hover:text-zinc-700"
                   aria-label="Star on GitHub"
                 >
-                  <span className="absolute inset-0 scale-75 rounded-xl bg-zinc-900/[0.04] opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
+                  <span className="absolute inset-0 scale-75 rounded-xl bg-zinc-900/4 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                   <Github size={17} className="relative z-10" />
                 </a>
 
@@ -177,7 +163,7 @@ export function Navbar() {
                     className="relative overflow-hidden bg-zinc-900 font-semibold text-white shadow-lg shadow-zinc-900/20 transition-shadow duration-300 hover:shadow-xl hover:shadow-zinc-900/30"
                   >
                     {/* Shimmer sweep */}
-                    <span className="pointer-events-none absolute inset-0 translate-x-[-100%] bg-linear-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-[100%]" />
+                    <span className="pointer-events-none absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                     <span className="relative z-10">Open Editor</span>
                   </Button>
                 </div>
@@ -219,8 +205,8 @@ export function Navbar() {
                 className="relative mt-2"
               >
                 {/* Border */}
-                <div className="absolute -inset-[1px] rounded-2xl bg-linear-to-b from-zinc-200/60 to-zinc-200/30" />
-                <div className="relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-2xl shadow-zinc-900/[0.06] backdrop-blur-2xl">
+                <div className="absolute -inset-px rounded-2xl bg-linear-to-b from-zinc-200/60 to-zinc-200/30" />
+                <div className="relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-2xl shadow-zinc-900/6 backdrop-blur-2xl">
                   <div className="flex flex-col gap-1">
                     {navLinks.map((link, i) => (
                       <motion.div

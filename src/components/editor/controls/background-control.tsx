@@ -43,18 +43,20 @@ function TabButton({
 /* ─── main ─── */
 
 export function BackgroundControl() {
-  const bgType = useEditorStore((s) => s.bgType);
-  const bgGradient = useEditorStore((s) => s.bgGradient);
-  const bgMesh = useEditorStore((s) => s.bgMesh);
-  const bgSolid = useEditorStore((s) => s.bgSolid);
-  const bgImage = useEditorStore((s) => s.bgImage);
-  const setBgType = useEditorStore((s) => s.setBgType);
-  const setBgGradient = useEditorStore((s) => s.setBgGradient);
-  const setBgMesh = useEditorStore((s) => s.setBgMesh);
-  const setBgSolid = useEditorStore((s) => s.setBgSolid);
-  const setBgImage = useEditorStore((s) => s.setBgImage);
-  const noiseOpacity = useEditorStore((s) => s.noiseOpacity);
-  const setNoiseOpacity = useEditorStore((s) => s.setNoiseOpacity);
+  const {
+    bgType,
+    bgGradient,
+    bgMesh,
+    bgSolid,
+    bgImage,
+    setBgType,
+    setBgGradient,
+    setBgMesh,
+    setBgSolid,
+    setBgImage,
+    noiseOpacity,
+    setNoiseOpacity,
+  } = useEditorStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 

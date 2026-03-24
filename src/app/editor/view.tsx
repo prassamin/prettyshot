@@ -33,13 +33,12 @@ export function EditorView() {
           {!image ? <UploadZone /> : <PreviewCanvas />}
         </div>
 
-        {/* Sidebar — shown when image loaded */}
         {image && (
           <motion.aside
             initial={{ x: 40, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="hidden w-[340px] shrink-0 border-l border-zinc-200/60 bg-white/60 backdrop-blur-xl lg:block"
+            className="hidden w-85 shrink-0 border-l border-zinc-200/60 bg-white/60 backdrop-blur-xl lg:block"
           >
             <ControlsSidebar sectionContent={sectionContent} />
           </motion.aside>

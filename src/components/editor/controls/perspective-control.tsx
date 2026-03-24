@@ -55,12 +55,14 @@ function Slider({
 }
 
 export function PerspectiveControl() {
-  const rotateX = useEditorStore((s) => s.rotateX);
-  const rotateY = useEditorStore((s) => s.rotateY);
-  const rotateZ = useEditorStore((s) => s.rotateZ);
-  const setRotateX = useEditorStore((s) => s.setRotateX);
-  const setRotateY = useEditorStore((s) => s.setRotateY);
-  const setRotateZ = useEditorStore((s) => s.setRotateZ);
+  const {
+    rotateX,
+    rotateY,
+    rotateZ,
+    setRotateX,
+    setRotateY,
+    setRotateZ,
+  } = useEditorStore();
 
   const isActive = (p: TiltPreset) =>
     p.x === rotateX && p.y === rotateY && p.z === rotateZ;

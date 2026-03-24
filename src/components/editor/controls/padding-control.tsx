@@ -4,10 +4,7 @@ import { useEditorStore } from "@/stores/editor-store";
 import { ASPECT_RATIOS } from "@/lib/presets";
 
 export function PaddingControl() {
-  const padding = useEditorStore((s) => s.padding);
-  const setPadding = useEditorStore((s) => s.setPadding);
-  const aspectRatio = useEditorStore((s) => s.aspectRatio);
-  const setAspectRatio = useEditorStore((s) => s.setAspectRatio);
+  const { padding, setPadding, aspectRatio, setAspectRatio } = useEditorStore();
 
   return (
     <div className="space-y-4">
