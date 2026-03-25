@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { getCurrentUrl, getOrigin } from "./url";
+import { getCurrentUrl } from "./url";
 import { APP_NAME } from "@/config";
 
 export const metatag = async ({

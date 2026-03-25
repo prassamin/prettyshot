@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Hero } from "@/components/home/hero";
 import { Gallery } from "@/components/home/gallery";
@@ -8,18 +7,7 @@ import { Features } from "@/components/home/features";
 import { HowItWorks } from "@/components/home/how-it-works";
 import { Faq } from "@/components/home/faq";
 import { SmoothScroll } from "@/components/smooth-scroll";
-import { metatag } from "@/lib/metatag";
 import { APP_NAME } from "@/config";
-
-
-export const generateMetadata = () => {
-  return metatag({
-    title: `Editor | ${APP_NAME}`,
-    description:
-      "Beautify your screenshots with gradient backgrounds, mesh gradients, shadows, noise texture, perspective tilt, and more. Export in PNG or JPG at up to 3x scale.",
-  });
-};
-
 
 export default async function Home() {
   const origin = await getOrigin();
