@@ -4,6 +4,9 @@ import { Hero } from "@/components/home/hero";
 import { Gallery } from "@/components/home/gallery";
 import { Footer } from "@/components/footer";
 import { getOrigin } from "@/lib/url";
+import { Features } from "@/components/home/features";
+import { HowItWorks } from "@/components/home/how-it-works";
+import { Faq } from "@/components/home/faq";
 
 export const metadata: Metadata = {
   title: "PrettyShot | Make your screenshots look stunning",
@@ -35,6 +38,9 @@ export default async function Home() {
       <Navbar />
       <Hero />
       <Gallery />
+      <HowItWorks/>
+      <Features/>
+      <Faq/>
       <Footer />
     </main>
   );

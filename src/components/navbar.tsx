@@ -13,7 +13,11 @@ import { Github } from "@/components/icons/github";
 import { APP_NAME, APP_GITHUB_URL } from "@/config";
 import { useRouter } from "@bprogress/next";
 
-const navLinks = [{ label: "Features", href: "#features" }];
+const navLinks = [
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Features", href: "#features" },
+  { label: "FAQ", href: "#faq" },
+];
 
 function SpotlightNav({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);

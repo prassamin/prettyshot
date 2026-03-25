@@ -122,6 +122,10 @@
 } */
 
 @layer base {
+  * {
+    @apply scroll-smooth;
+  }
+  
   html {
     @apply overflow-x-hidden font-sans;
   }

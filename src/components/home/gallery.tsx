@@ -182,7 +182,6 @@ function MobileCard({
           height={pair.bh}
           className="block h-auto max-h-[85%] w-auto max-w-[90%] rounded-lg object-contain"
           style={{ boxShadow: "0 4px 20px -4px rgba(0,0,0,0.1)" }}
-          quality={90}
         />
       </div>
 
@@ -200,7 +199,6 @@ function MobileCard({
           width={pair.aw}
           height={pair.ah}
           className="block h-full w-full object-cover"
-          quality={90}
         />
       </div>
 

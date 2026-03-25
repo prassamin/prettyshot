@@ -64,7 +64,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn(fredoka.variable)}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+      className={cn(fredoka.variable)}
+    >
       <body className={cn("antialiased")}>
         <Providers>{children}</Providers>
       </body>
