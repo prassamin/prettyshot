@@ -382,16 +382,18 @@ export function Hero() {
             animate="visible"
             className="text-4xl font-extrabold leading-[1.08] tracking-tight text-zinc-900 sm:text-6xl md:text-7xl"
           >
+            <span className="sr-only">Make your screenshots look stunning</span>
             {headlineWords.map((word) => (
               <motion.span
                 key={word}
                 variants={wordPop}
                 className="mr-[0.28em] inline-block"
+                aria-hidden="true"
               >
                 {word}
               </motion.span>
             ))}
-            <br className="sm:hidden" />
+            <br className="sm:hidden" aria-hidden="true" />
             {gradientWords.map((word) => (
               <motion.span
                 key={word}
@@ -401,6 +403,7 @@ export function Hero() {
                   backgroundSize: "200% 100%",
                   animation: "heroTextShimmer 4s ease infinite",
                 }}
+                aria-hidden="true"
               >
                 {word}
               </motion.span>
