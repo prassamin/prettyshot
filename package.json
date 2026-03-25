@@ -13,6 +13,7 @@
     "@heroui/react": "^3.0.1",
     "@heroui/styles": "^3.0.1",
     "@tanstack/react-query": "^5.95.2",
+    "@vercel/analytics": "^2.0.1",
     "axios": "^1.13.6",
     "framer-motion": "^12.38.0",
     "gsap": "^3.14.2",

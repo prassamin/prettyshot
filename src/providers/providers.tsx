@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AppProgressProvider as ProgressProvider } from "@bprogress/next";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/next"
 import { useAppStore } from "@/stores/app-store";
 
 function AppStateInit() {
@@ -26,6 +27,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <AppStateInit />
         {children}
+        <VercelAnalytics />
       </ProgressProvider>
     </QueryClientProvider>
   );
