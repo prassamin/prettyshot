@@ -276,7 +276,7 @@ export function Gallery() {
       {/* ═══ Desktop layout (md+) ═══ */}
       <div
         ref={pinRef}
-        className="relative hidden h-dvh flex-col justify-center bg-zinc-950 px-5 md:flex"
+        className="relative flex h-dvh flex-col justify-center bg-zinc-950 px-5"
       >
         {/* Ambient blurs */}
         <div
@@ -302,64 +302,122 @@ export function Gallery() {
             </h2>
           </div>
 
-          {/* Column labels */}
-          <div className="mb-5 grid grid-cols-[1fr_80px_1fr] items-end lg:grid-cols-[1fr_100px_1fr]">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-                Before
-              </span>
-              <p className="text-[13px] text-zinc-600">Raw screenshot</p>
-            </div>
-            <div />
-            <div className="text-right">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-orange-400/80">
-                After
-              </span>
-              <p className="text-[13px] text-zinc-600">Polished screenshot</p>
-            </div>
-          </div>
-
-          {/* Stacks */}
-          <div className="grid grid-cols-[1fr_80px_1fr] items-center lg:grid-cols-[1fr_100px_1fr]">
-            <StackedCards
-              images={beforeImages}
-              activeIndex={active}
-              onSelect={setActive}
-              type="before"
-            />
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-orange-500/10 ring-1 ring-orange-500/20 lg:size-12">
-                <ArrowRight className="size-5 text-orange-400 lg:size-6" />
+          <div className="not-md:hidden">
+            {/* Column labels */}
+            <div className="mb-5 grid grid-cols-[1fr_80px_1fr] items-end lg:grid-cols-[1fr_100px_1fr]">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+                  Before
+                </span>
+                <p className="text-[13px] text-zinc-600">Raw screenshot</p>
               </div>
-              <span className="hidden text-center text-xs font-semibold italic leading-tight text-orange-400/60 lg:block">
-                presentation
-                <br />
-                ready
-              </span>
+              <div />
+              <div className="text-right">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-orange-400/80">
+                  After
+                </span>
+                <p className="text-[13px] text-zinc-600">Polished screenshot</p>
+              </div>
             </div>
-            <StackedCards
-              images={afterImages}
-              activeIndex={active}
-              onSelect={setActive}
-              type="after"
-            />
+
+            {/* Stacks */}
+            <div className="grid grid-cols-[1fr_80px_1fr] items-center lg:grid-cols-[1fr_100px_1fr]">
+              <StackedCards
+                images={beforeImages}
+                activeIndex={active}
+                onSelect={setActive}
+                type="before"
+              />
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-full bg-orange-500/10 ring-1 ring-orange-500/20 lg:size-12">
+                  <ArrowRight className="size-5 text-orange-400 lg:size-6" />
+                </div>
+                <span className="hidden text-center text-xs font-semibold italic leading-tight text-orange-400/60 lg:block">
+                  presentation
+                  <br />
+                  ready
+                </span>
+              </div>
+              <StackedCards
+                images={afterImages}
+                activeIndex={active}
+                onSelect={setActive}
+                type="after"
+              />
+            </div>
+
+            {/* Dots */}
+            <div className="mt-10 flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2">
+                {pairs.map((pair, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActive(i)}
+                    aria-label={`View ${pair.label}`}
+                    className="group relative"
+                  >
+                    <div
+                      className="rounded-full transition-all duration-500"
+                      style={{
+                        width: active === i ? 36 : 10,
+                        height: 10,
+                        backgroundColor:
+                          active === i ? "#fb923c" : "rgba(255,255,255,0.12)",
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Dots */}
-          <div className="mt-10 flex flex-col items-center gap-3">
-            <div className="flex items-center gap-2">
+          <div className="md:hidden">
+            {/* Before/After toggle */}
+            <div className="mb-5 flex items-center justify-center">
+              <div className="flex rounded-full bg-white/6 p-1 ring-1 ring-white/8">
+                <button
+                  onClick={() => setMobileShowAfter(false)}
+                  className="rounded-full px-4 py-1.5 text-xs font-bold transition-all"
+                  style={{
+                    backgroundColor: !mobileShowAfter
+                      ? "rgba(255,255,255,0.12)"
+                      : "transparent",
+                    color: !mobileShowAfter ? "#fff" : "rgba(255,255,255,0.4)",
+                  }}
+                >
+                  Before
+                </button>
+                <button
+                  onClick={() => setMobileShowAfter(true)}
+                  className="rounded-full px-4 py-1.5 text-xs font-bold transition-all"
+                  style={{
+                    backgroundColor: mobileShowAfter
+                      ? "#fb923c"
+                      : "transparent",
+                    color: mobileShowAfter ? "#fff" : "rgba(255,255,255,0.4)",
+                  }}
+                >
+                  After
+                </button>
+              </div>
+            </div>
+
+            {/* Card */}
+            <MobileCard pair={pairs[active]} showAfter={mobileShowAfter} />
+
+            {/* Dots */}
+            <div className="mt-5 flex items-center justify-center gap-2">
               {pairs.map((pair, i) => (
                 <button
                   key={i}
                   onClick={() => setActive(i)}
                   aria-label={`View ${pair.label}`}
-                  className="group relative"
                 >
                   <div
                     className="rounded-full transition-all duration-500"
                     style={{
-                      width: active === i ? 36 : 10,
-                      height: 10,
+                      width: active === i ? 28 : 8,
+                      height: 8,
                       backgroundColor:
                         active === i ? "#fb923c" : "rgba(255,255,255,0.12)",
                     }}
@@ -367,86 +425,6 @@ export function Gallery() {
                 </button>
               ))}
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ Mobile layout (<md) ═══ */}
-      <div className="relative bg-zinc-950 px-5 py-16 md:hidden">
-        {/* Ambient blurs */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          aria-hidden="true"
-        >
-          <div className="absolute top-0 left-1/2 h-px w-2/3 -translate-x-1/2 bg-linear-to-r from-transparent via-white/10 to-transparent" />
-          <div className="absolute -top-40 left-1/4 size-150 rounded-full bg-violet-900/15 blur-[140px]" />
-          <div className="absolute -bottom-40 right-1/4 size-150 rounded-full bg-orange-900/10 blur-[140px]" />
-        </div>
-        <div className="mx-auto max-w-lg">
-          {/* Heading */}
-          <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/6 px-3 py-1.5 text-xs font-semibold text-white/50 ring-1 ring-white/8">
-              <Sparkles className="size-3 text-orange-400" />
-              Before & After
-            </div>
-            <h2 className="text-2xl font-extrabold tracking-tight text-white">
-              From plain to{" "}
-              <span className="bg-linear-to-r from-orange-400 via-rose-400 to-violet-400 bg-clip-text text-transparent">
-                stunning
-              </span>
-            </h2>
-          </div>
-
-          {/* Before/After toggle */}
-          <div className="mb-5 flex items-center justify-center">
-            <div className="flex rounded-full bg-white/6 p-1 ring-1 ring-white/8">
-              <button
-                onClick={() => setMobileShowAfter(false)}
-                className="rounded-full px-4 py-1.5 text-xs font-bold transition-all"
-                style={{
-                  backgroundColor: !mobileShowAfter
-                    ? "rgba(255,255,255,0.12)"
-                    : "transparent",
-                  color: !mobileShowAfter ? "#fff" : "rgba(255,255,255,0.4)",
-                }}
-              >
-                Before
-              </button>
-              <button
-                onClick={() => setMobileShowAfter(true)}
-                className="rounded-full px-4 py-1.5 text-xs font-bold transition-all"
-                style={{
-                  backgroundColor: mobileShowAfter ? "#fb923c" : "transparent",
-                  color: mobileShowAfter ? "#fff" : "rgba(255,255,255,0.4)",
-                }}
-              >
-                After
-              </button>
-            </div>
-          </div>
-
-          {/* Card */}
-          <MobileCard pair={pairs[active]} showAfter={mobileShowAfter} />
-
-          {/* Dots */}
-          <div className="mt-5 flex items-center justify-center gap-2">
-            {pairs.map((pair, i) => (
-              <button
-                key={i}
-                onClick={() => setActive(i)}
-                aria-label={`View ${pair.label}`}
-              >
-                <div
-                  className="rounded-full transition-all duration-500"
-                  style={{
-                    width: active === i ? 28 : 8,
-                    height: 8,
-                    backgroundColor:
-                      active === i ? "#fb923c" : "rgba(255,255,255,0.12)",
-                  }}
-                />
-              </button>
-            ))}
           </div>
         </div>
       </div>
