@@ -1,4 +1,6 @@
+import { Metadata } from "next";
 import { getCurrentUrl, getOrigin } from "./url";
+import { APP_NAME } from "@/config";
 
 export const metatag = async ({
   title,
@@ -9,21 +11,19 @@ export const metatag = async ({
 }: {
   title: string;
   url?: string;
-  robots?: string;
+  robots?: "index, follow" | "noindex, nofollow";
   keywords?: string[];
   description?: string;
 }) => {
-  const origin = await getOrigin();
-  const thumbnail = `${origin}/thumbnail.png`;
+  const thumbnail = `/thumbnail.png`;
   if (!url) url = await getCurrentUrl();
 
   const fixedKeywords: string[] = [];
 
   const margedkeywords: string[] = fixedKeywords.concat(keywords);
 
-  const m: any = {
+  const m: Metadata = {
     title: title,
-    canonical: url,
     keywords: margedkeywords,
     openGraph: {
       title: title,
@@ -34,6 +34,7 @@ export const metatag = async ({
           url: thumbnail,
           width: 1200,
           height: 630,
+          alt: APP_NAME,
         },
       ],
       locale: "en_US",
@@ -48,10 +49,6 @@ export const metatag = async ({
       languages: { "en-US": url },
     },
     robots: robots,
-    structuredData: {
-      name: title,
-      url: url,
-    },
   };
 
   if (description) m.description = description;

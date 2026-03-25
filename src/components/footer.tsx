@@ -69,7 +69,7 @@ export function Footer() {
           {/* Brand column */}
           <div className="lg:col-span-2">
             <Link href="/" className="group inline-flex items-center gap-2.5">
-              <Image src="/prettyshot.svg" alt="" width={32} height={25} />
+              <Image src="/prettyshot.svg" alt="" width={32} height={25} priority />
               <span className="text-lg font-bold tracking-tight text-white">
                 {APP_NAME}
               </span>

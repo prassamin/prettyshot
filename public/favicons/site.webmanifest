@@ -1,0 +1,37 @@
+{
+  "short_name": "PrettyShot",
+  "dir": "auto",
+  "name": "",
+  "background_color": "#f5f5f5",
+  "theme_color": "#f5f5f5",
+  "display": "standalone",
+  "start_url": "https://prettyshot.site/?launchedfrom=homescreen",
+  "scope": "https://prettyshot.site",
+  "id": "https://prettyshot.site/hb6rwGuMNIdZibvj5srL",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "icons": [
+    {
+      "src": "/favicons/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicons/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+pwa",
+      "url": "https://prettyshot.site/?launchedfrom=homescreen&pwaprotocolredirect=%s"
+    },
+    {
+      "protocol": "web+prettyshot",
+      "url": "https://prettyshot.site/?launchedfrom=homescreen&pwaprotocolredirect=%s"
+    }
+  ]
+}

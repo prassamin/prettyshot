@@ -18,14 +18,13 @@ export const viewport: Viewport = {
 
 export const generateMetadata = async (): Promise<Metadata> => {
   const origin = await getOrigin();
+  const title = `${APP_NAME} | Make your screenshots look stunning`;
+  const description =
+    "Drop any screenshot, pick a style, and export a beautiful image in seconds. Gradient backgrounds, shadows, noise, perspective, zero signup, totally free.";
   return {
     metadataBase: new URL(origin),
-    title: {
-      default: `${APP_NAME} | Make your screenshots look stunning`,
-      template: `%s | ${APP_NAME}`,
-    },
-    description:
-      "Drop any screenshot, pick a style, and export a beautiful image in seconds. Gradient backgrounds, shadows, noise, perspective, zero signup, totally free.",
+    title: title,
+    description: description,
     keywords: [
       "screenshot beautifier",
       "screenshot editor",
@@ -42,19 +41,35 @@ export const generateMetadata = async (): Promise<Metadata> => {
     creator: DEVELOPED_BY,
     authors: [{ name: DEVELOPED_BY, url: DEVELOPED_BY_URL }],
     appleWebApp: { title: APP_NAME },
+    icons: {
+      icon: [
+        { url: "/favicons/favicon-96x96.png", sizes: "96x96" },
+        { url: "/favicons/favicon-192x192.png", sizes: "192x192" },
+        { url: "/favicons/favicon-512x512.png", sizes: "512x512" },
+        { url: "/favicons/favicon.svg" },
+      ],
+      shortcut: ["/favicons/favicon.svg"],
+      apple: [
+        {
+          url: "/favicons/favicon-192x192.png",
+          sizes: "192x192",
+          type: "image/png",
+        },
+      ],
+    },
+    manifest: "/favicons/site.webmanifest",
     openGraph: {
+      title: title,
+      description: description,
       type: "website",
       siteName: APP_NAME,
       locale: "en_US",
-      images: [
-        { url: "/thumbnail.png", width: 1200, height: 630, alt: APP_NAME },
-      ],
     },
     twitter: {
       card: "summary_large_image",
-      images: ["/thumbnail.png"],
+      title: title,
+      description: description,
     },
-    robots: { index: true, follow: true },
   };
 };
 

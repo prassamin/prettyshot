@@ -119,6 +119,7 @@ export function Navbar() {
                   alt=""
                   width={28}
                   height={22}
+                  priority
                 />
                 <span className="text-base leading-tight font-bold tracking-tight text-zinc-800 sm:text-lg">
                   {APP_NAME}
