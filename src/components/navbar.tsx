@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   motion,
   AnimatePresence,
@@ -111,13 +112,17 @@ export function Navbar() {
               {/* Logo */}
               <Link
                 href="/"
-                className="group relative flex items-center gap-2.5"
+                className="group relative flex items-center gap-2"
               >
-                <div className="flex flex-col">
-                  <span className="text-base leading-tight font-bold tracking-tight text-zinc-800 sm:text-lg">
-                    {APP_NAME}
-                  </span>
-                </div>
+                <Image
+                  src="/prettyshot.svg"
+                  alt=""
+                  width={28}
+                  height={22}
+                />
+                <span className="text-base leading-tight font-bold tracking-tight text-zinc-800 sm:text-lg">
+                  {APP_NAME}
+                </span>
               </Link>
 
               {/* Desktop nav */}

@@ -7,6 +7,7 @@ import { getOrigin } from "@/lib/url";
 import { Features } from "@/components/home/features";
 import { HowItWorks } from "@/components/home/how-it-works";
 import { Faq } from "@/components/home/faq";
+import { SmoothScroll } from "@/components/smooth-scroll";
 
 export const metadata: Metadata = {
   title: "PrettyShot | Make your screenshots look stunning",
@@ -31,6 +32,7 @@ export default async function Home() {
 
   return (
     <main>
+      <SmoothScroll />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd }}
@@ -38,9 +40,9 @@ export default async function Home() {
       <Navbar />
       <Hero />
       <Gallery />
-      <HowItWorks/>
-      <Features/>
-      <Faq/>
+      <HowItWorks />
+      <Features />
+      <Faq />
       <Footer />
     </main>
   );
