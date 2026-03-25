@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 
 export const generateMetadata = async (): Promise<Metadata> => {
   const origin = await getOrigin();
-  const title = `${APP_NAME} | Make your screenshots look stunning`;
+  const title = `${APP_NAME} | Every screenshot deserves to be remembered`;
   const description =
     "Drop any screenshot, pick a style, and export a beautiful image in seconds. Gradient backgrounds, shadows, noise, perspective, zero signup, totally free.";
   return {

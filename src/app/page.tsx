@@ -8,6 +8,15 @@ import { HowItWorks } from "@/components/home/how-it-works";
 import { Faq } from "@/components/home/faq";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { APP_NAME } from "@/config";
+import { metatag } from "@/lib/metatag";
+
+export const generateMetadata = () => {
+  return metatag({
+    title: `${APP_NAME} | Every screenshot deserves to be remembered`,
+    description:
+      "Drop any screenshot, pick a style, and export a beautiful image in seconds. Gradient backgrounds, shadows, noise, perspective, zero signup, totally free.",
+  });
+};
 
 export default async function Home() {
   const origin = await getOrigin();
