@@ -351,8 +351,8 @@ const featurePills = [
 export function Hero() {
   const router = useRouter();
 
-  const headlineWords = ["Make", "your", "screenshots"];
-  const gradientWords = ["look", "stunning"];
+  const headlineWords = ["Every", "screenshot", "deserves"];
+  const gradientWords = ["to", "be", "remembered"];
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#faf8f6] pt-28 sm:pt-32">
@@ -382,7 +382,7 @@ export function Hero() {
             animate="visible"
             className="text-4xl font-extrabold leading-[1.08] tracking-tight text-zinc-900 sm:text-6xl md:text-7xl"
           >
-            <span className="sr-only">Make your screenshots look stunning</span>
+            <span className="sr-only">Every screenshot deserves to be remembered</span>
             {headlineWords.map((word) => (
               <motion.span
                 key={word}
