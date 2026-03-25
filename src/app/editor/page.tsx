@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/config";
 import { EditorView } from "./view";
 import { metatag } from "@/lib/metatag";
 

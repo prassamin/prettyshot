@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<p align="center">
+  <img src="public/thumbnail.png" width="80%" style="border-radius: 10px;" alt="PrettyShot" />
+</p>
 
-## Getting Started
+<h1 align="center">PrettyShot</h1>
 
-First, run the development server:
+<p align="center">
+  <strong>Every screenshot deserves to be remembered.</strong>
+</p>
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+<p align="center">
+  Drop any screenshot, pick a style, and export a beautiful image in seconds.<br/>
+  Free, open source, and runs entirely in your browser.
+</p>
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+<p align="center">
+  <a href="https://github.com/prassamin/prettyshot/stargazers"><img src="https://img.shields.io/github/stars/prassamin/prettyshot?style=flat&color=orange" alt="Stars" /></a>
+  <a href="https://github.com/prassamin/prettyshot/blob/main/LICENSE"><img src="https://img.shields.io/github/license/prassamin/prettyshot?style=flat" alt="License" /></a>
+  <a href="https://github.com/prassamin/prettyshot/issues"><img src="https://img.shields.io/github/issues/prassamin/prettyshot?style=flat" alt="Issues" /></a>
+</p>
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Features
 
-## Learn More
+- **Gradient Backgrounds** - 12 handcrafted gradients, mesh images, solid colors, or upload your own
+- **Rich Shadows** - 7 shadow presets with full color picker
+- **Noise Texture** - Add grain to backgrounds for a premium, tactile feel
+- **3D Perspective** - Tilt, rotate, and angle screenshots for dynamic hero shots
+- **Aspect Ratios** - Auto, 16:9, 4:3, 1:1, or 9:16
+- **HD Export** - PNG or JPG at 1x, 2x, or 3x scale
+- **Clipboard Copy** - One click to copy, paste anywhere
+- **Zero Signup** - No account, no email, no watermark. Just open and create
 
-To learn more about Next.js, take a look at the following resources:
+## Contributing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Contributions are welcome! Feel free to open an issue or submit a pull request.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Fork the repository
+2. Create your branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project is open source and available under the [MIT License](LICENSE).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Author
+
+Made with love by [PRAS Samin](https://github.com/prassamin)
