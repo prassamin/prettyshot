@@ -458,12 +458,33 @@ export function Hero() {
             </Button>
           </motion.div>
 
-          {/* Feature pills */}
+          {/* Product Hunt badge */}
           <motion.div
-            variants={fadeUp(1)}
+            variants={fadeUp(0.9)}
             initial="hidden"
             animate="visible"
-            className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:mt-10 sm:gap-3"
+            className="mt-8 flex justify-center sm:mt-10"
+          >
+            <a
+              href="https://www.producthunt.com/products/prettyshot-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-prettyshot-2"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1107377&theme=light&t=1774521643193"
+                alt="PrettyShot - Every screenshot deserves to be remembered | Product Hunt"
+                width={250}
+                height={54}
+              />
+            </a>
+          </motion.div>
+
+          {/* Feature pills */}
+          <motion.div
+            variants={fadeUp(1.1)}
+            initial="hidden"
+            animate="visible"
+            className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3"
           >
             {featurePills.map((pill) => (
               <div
