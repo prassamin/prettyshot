@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { GRADIENT_PRESETS, MESH_GRADIENT_PRESETS, SHADOW_PRESETS } from "@/lib/presets";
+import {
+  GRADIENT_PRESETS,
+  MESH_GRADIENT_PRESETS,
+  SHADOW_PRESETS,
+} from "@/lib/presets";
 
 /* ─── types ─── */
 
@@ -19,6 +23,9 @@ export interface EditorState {
   shadowPreset: string;
   shadowColor: string;
   aspectRatio: number | null;
+  isCustomAspectRatio: boolean;
+  customAspectRatioWidth: number;
+  customAspectRatioHeight: number;
   noiseOpacity: number;
   rotateX: number;
   rotateY: number;
@@ -39,6 +46,9 @@ export interface EditorState {
   setShadowPreset: (name: string) => void;
   setShadowColor: (hex: string) => void;
   setAspectRatio: (value: number | null) => void;
+  setIsCustomAspectRatio: (value: boolean) => void;
+  setCustomAspectRatioWidth: (n: number) => void;
+  setCustomAspectRatioHeight: (n: number) => void;
   setNoiseOpacity: (n: number) => void;
   setRotateX: (n: number) => void;
   setRotateY: (n: number) => void;
@@ -63,6 +73,9 @@ const initialState = {
   shadowPreset: SHADOW_PRESETS[2].name, // "Medium"
   shadowColor: "#000000",
   aspectRatio: null,
+  isCustomAspectRatio: false,
+  customAspectRatioWidth: 16,
+  customAspectRatioHeight: 9,
   noiseOpacity: 0,
   rotateX: 0,
   rotateY: 0,
@@ -90,6 +103,11 @@ export const useEditorStore = create<EditorState>((set) => ({
   setShadowPreset: (shadowPreset) => set({ shadowPreset }),
   setShadowColor: (shadowColor) => set({ shadowColor }),
   setAspectRatio: (aspectRatio) => set({ aspectRatio }),
+  setIsCustomAspectRatio: (isCustomAspectRatio) => set({ isCustomAspectRatio }),
+  setCustomAspectRatioWidth: (customAspectRatioWidth) =>
+    set({ customAspectRatioWidth }),
+  setCustomAspectRatioHeight: (customAspectRatioHeight) =>
+    set({ customAspectRatioHeight }),
   setNoiseOpacity: (noiseOpacity) => set({ noiseOpacity }),
   setRotateX: (rotateX) => set({ rotateX }),
   setRotateY: (rotateY) => set({ rotateY }),

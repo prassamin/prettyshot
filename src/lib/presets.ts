@@ -99,15 +99,21 @@ export interface MeshGradientPreset {
   name: string;
   /** path relative to /public */
   src: string;
+  description?: string;
 }
 
 export const MESH_GRADIENT_PRESETS: MeshGradientPreset[] = [
-  { name: "Mesh 1", src: "/mesh/mesh-98.webp" },
-  { name: "Mesh 2", src: "/mesh/mesh-8306.webp" },
-  { name: "Mesh 3", src: "/mesh/mesh-8330.webp" },
-  { name: "Mesh 4", src: "/mesh/mesh-8337.webp" },
-  { name: "Mesh 5", src: "/mesh/mesh-8486.webp" },
-  { name: "Mesh 6", src: "/mesh/mesh-8673.webp" },
+  {
+    name: "Mesh 1",
+    src: "/mesh/mesh-1.webp",
+    description: "collected from https://x.com/AlbiaHossain",
+  },
+  { name: "Mesh 2", src: "/mesh/mesh-98.webp" },
+  { name: "Mesh 3", src: "/mesh/mesh-8306.webp" },
+  { name: "Mesh 4", src: "/mesh/mesh-8330.webp" },
+  { name: "Mesh 5", src: "/mesh/mesh-8337.webp" },
+  { name: "Mesh 6", src: "/mesh/mesh-8486.webp" },
+  { name: "Mesh 7", src: "/mesh/mesh-8673.webp" },
 ];
 
 /* ─── solid color presets ─── */
