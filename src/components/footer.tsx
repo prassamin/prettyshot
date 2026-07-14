@@ -77,7 +77,7 @@ export function Footer() {
 
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-zinc-500">
               Make your screenshots look stunning in seconds. Free, open source,
-              and runs entirely in your browser. No signup, no watermarks.
+              and runs entirely in your browser. No signup.
             </p>
 
             {/* Social icons */}

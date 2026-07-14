@@ -7,7 +7,7 @@ import { Sparkles, Plus, Minus } from "lucide-react";
 const faqs = [
   {
     q: "Is PrettyShot really free?",
-    a: "Yes! The core editor is completely free — no signup, no watermark restrictions, no hidden limits. We'll launch a Pro tier later with extra features, but the free version is powerful on its own.",
+    a: "Yes! The core editor is completely free — no signup required. We offer a Pro tier for those who want to remove watermarks and access premium features like cloud sync and custom backgrounds.",
   },
   {
     q: "Do I need to create an account?",

@@ -6,6 +6,7 @@ import { getOrigin } from "@/lib/url";
 import { Features } from "@/components/home/features";
 import { HowItWorks } from "@/components/home/how-it-works";
 import { Faq } from "@/components/home/faq";
+import { Pricing } from "@/components/home/pricing";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { APP_NAME } from "@/config";
 import { metatag } from "@/lib/metatag";
@@ -44,6 +45,7 @@ export default async function Home() {
       <Gallery />
       <HowItWorks />
       <Features />
+      <Pricing />
       <Faq />
       <Footer />
     </main>

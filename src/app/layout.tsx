@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import "./globals.css";
 import { APP_NAME, DEVELOPED_BY, DEVELOPED_BY_URL } from "@/config";
 import { getOrigin } from "@/lib/url";
+import { createServerClient } from "@/lib/supabase/server";
 
 const fredoka = Fredoka({ subsets: ["latin"], variable: "--font-fredoka" });
 
@@ -73,11 +74,24 @@ export const generateMetadata = async (): Promise<Metadata> => {
   };
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_pro")
+      .eq("id", user.id)
+      .single();
+
+    (user as any).is_pro = profile?.is_pro;
+  }
   return (
     <html
       lang="en"
@@ -86,7 +100,7 @@ export default function RootLayout({
       className={cn(fredoka.variable)}
     >
       <body className={cn("antialiased")}>
-        <Providers>{children}</Providers>
+        <Providers user={user as any}>{children}</Providers>
       </body>
     </html>
   );

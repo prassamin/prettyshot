@@ -1,34 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppProgressProvider as ProgressProvider } from "@bprogress/next";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Analytics as VercelAnalytics } from "@vercel/analytics/next"
-import { useAppStore } from "@/stores/app-store";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
+import { AppStoreContext, createAppStore, User } from "@/stores/app-store";
 
-function AppStateInit() {
-  const setOrigin = useAppStore((state) => state.setOrigin);
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, [setOrigin]);
-  return null;
-}
-
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  user,
+}: {
+  children: React.ReactNode;
+  user?: User;
+}) {
   const [queryClient] = useState(() => new QueryClient());
+  const storeRef = useRef<ReturnType<typeof createAppStore>>(undefined);
+  
+  if (!storeRef.current) {
+    storeRef.current = createAppStore({ user });
+  }
+
+  useEffect(() => {
+    if (storeRef.current) {
+      storeRef.current.getState().setOrigin(window.location.origin);
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ProgressProvider
-        height="3px"
-        color="var(--accent)"
-        options={{ showSpinner: false }}
-        shallowRouting
-      >
-        <AppStateInit />
-        {children}
-        <VercelAnalytics />
-      </ProgressProvider>
+      <AppStoreContext.Provider value={storeRef.current}>
+        <ProgressProvider
+          height="3px"
+          color="var(--accent)"
+          options={{ showSpinner: false }}
+          shallowRouting
+        >
+          {children}
+          <VercelAnalytics />
+        </ProgressProvider>
+      </AppStoreContext.Provider>
     </QueryClientProvider>
   );
 }

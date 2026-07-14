@@ -9,14 +9,24 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { Button } from "@heroui/react";
+import { Button, Avatar, Dropdown } from "@heroui/react";
 import { Github } from "@/components/icons/github";
+import {
+  LogOut,
+  LayoutTemplate,
+  Sparkles,
+  CreditCard,
+  Zap,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { APP_NAME, APP_GITHUB_URL } from "@/config";
 import { useRouter } from "@bprogress/next";
+import { useAppStore } from "@/stores/app-store";
 
 const navLinks = [
   { label: "How it works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
+  { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
 ];
 
@@ -72,6 +82,8 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
+  const { user, setUser } = useAppStore();
+  const supabase = createClient();
 
   useEffect(() => {
     function onScroll() {
@@ -110,10 +122,7 @@ export function Navbar() {
               }`}
             >
               {/* Logo */}
-              <Link
-                href="/"
-                className="group relative flex items-center gap-2"
-              >
+              <Link href="/" className="group relative flex items-center gap-2">
                 <Image
                   src="/prettyshot.svg"
                   alt=""
@@ -162,21 +171,143 @@ export function Navbar() {
                 {/* Separator */}
                 <div className="mx-2.5 h-5 w-px bg-linear-to-b from-transparent via-zinc-300 to-transparent" />
 
-                {/* CTA */}
-                <div className="group relative">
-                  {/* Outer glow on hover */}
-                  <div className="absolute -inset-1.5 rounded-2xl bg-linear-to-r from-orange-400 via-rose-400 to-violet-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-50" />
-                  <Button
-                    onPress={() => router.push("/editor")}
-                    variant="primary"
-                    size="sm"
-                    className="relative overflow-hidden bg-zinc-900 font-semibold text-white shadow-lg shadow-zinc-900/20 transition-shadow duration-300 hover:shadow-xl hover:shadow-zinc-900/30"
-                  >
-                    {/* Shimmer sweep */}
-                    <span className="pointer-events-none absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                    <span className="relative z-10">Open Editor</span>
-                  </Button>
-                </div>
+                {/* CTA or Profile */}
+                {user ? (
+                  <Dropdown>
+                    <Dropdown.Trigger>
+                      <Avatar
+                        className="transition-transform"
+                        color={user.is_pro ? "warning" : "default"}
+                        size="sm"
+                      >
+                        <Avatar.Image src={user.user_metadata?.avatar_url} />
+                        <Avatar.Fallback>
+                          {user.email?.charAt(0).toUpperCase()}
+                        </Avatar.Fallback>
+                      </Avatar>
+                    </Dropdown.Trigger>
+                    <Dropdown.Popover placement="bottom end">
+                      <Dropdown.Menu
+                        aria-label="User menu actions"
+                        className="w-64 p-2"
+                        onAction={(key) => {
+                          if (key === "upgrade") router.push("/#pricing");
+                          if (key === "editor") router.push("/editor");
+                          if (key === "logout") {
+                            supabase.auth.signOut().then(() => {
+                              setUser(null);
+                              router.push("/");
+                            });
+                          }
+                        }}
+                      >
+                        <Dropdown.Item
+                          id="profile"
+                          textValue="Profile"
+                          className="p-0 mb-2 opacity-100 data-[hover=true]:bg-transparent"
+                        >
+                          <div className="flex w-full items-center justify-between rounded-2xl border border-zinc-200/80 bg-white p-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-[14px] font-bold text-zinc-900">
+                                {user.user_metadata?.full_name || "My Account"}
+                              </span>
+                              <span className="text-[13px] font-medium text-zinc-500 truncate max-w-[140px]">
+                                {user.email}
+                              </span>
+                            </div>
+                            <Avatar
+                              size="sm"
+                              className="shrink-0 shadow-sm ring-1 ring-zinc-200/50"
+                            >
+                              <Avatar.Image
+                                src={user.user_metadata?.avatar_url}
+                              />
+                              <Avatar.Fallback>
+                                {user.email?.charAt(0).toUpperCase()}
+                              </Avatar.Fallback>
+                            </Avatar>
+                          </div>
+                        </Dropdown.Item>
+
+                        <Dropdown.Item
+                          id="editor"
+                          textValue="Open Editor"
+                          className="p-0 rounded-xl mb-1 data-[hover=true]:bg-zinc-100/80"
+                        >
+                          <div className="flex w-full items-center gap-2.5 px-3 py-2 cursor-pointer">
+                            <LayoutTemplate
+                              className="size-[18px] text-zinc-700 shrink-0"
+                              strokeWidth={1.8}
+                            />
+                            <span className="text-[14px] font-medium text-zinc-800">
+                              Open Editor
+                            </span>
+                          </div>
+                        </Dropdown.Item>
+
+                        <Dropdown.Item
+                          id="upgrade"
+                          textValue="Subscription"
+                          className="p-0 rounded-xl mb-1 data-[hover=true]:bg-zinc-100/80"
+                        >
+                          <div className="flex w-full items-center justify-between px-3 py-2 cursor-pointer">
+                            <div className="flex items-center gap-2.5">
+                              <CreditCard
+                                className="size-[18px] text-zinc-700 shrink-0"
+                                strokeWidth={1.8}
+                              />
+                              <span className="text-[14px] font-medium text-zinc-800">
+                                Subscription
+                              </span>
+                            </div>
+                            {user.is_pro ? (
+                              <span className="flex items-center gap-1 rounded bg-green-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-green-700">
+                                <Zap className="size-3 fill-current" />
+                                PRO
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 rounded bg-fuchsia-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-fuchsia-700">
+                                <Sparkles className="size-3" />
+                                UPGRADE
+                              </span>
+                            )}
+                          </div>
+                        </Dropdown.Item>
+
+                        <Dropdown.Item
+                          id="logout"
+                          textValue="Sign out"
+                          className="p-0 rounded-xl data-[hover=true]:bg-zinc-100/80 mt-1 border-t border-zinc-100"
+                        >
+                          <div className="flex w-full items-center gap-2.5 px-3 py-2 cursor-pointer">
+                            <LogOut
+                              className="size-[18px] text-zinc-700 shrink-0"
+                              strokeWidth={1.8}
+                            />
+                            <span className="text-[14px] font-medium text-zinc-800">
+                              Sign out
+                            </span>
+                          </div>
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown.Popover>
+                  </Dropdown>
+                ) : (
+                  <div className="group relative">
+                    {/* Outer glow on hover */}
+                    <div className="absolute -inset-1.5 rounded-2xl bg-linear-to-r from-orange-400 via-rose-400 to-violet-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-50" />
+                    <Button
+                      onPress={() => router.push("/editor")}
+                      variant="primary"
+                      size="sm"
+                      className="relative overflow-hidden bg-zinc-900 font-semibold text-white shadow-lg shadow-zinc-900/20 transition-shadow duration-300 hover:shadow-xl hover:shadow-zinc-900/30"
+                    >
+                      {/* Shimmer sweep */}
+                      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                      <span className="relative z-10">Open Editor</span>
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Mobile toggle */}
