@@ -33,9 +33,14 @@ export interface EditorState {
   rotateX: number;
   rotateY: number;
   rotateZ: number;
+  // Watermark
+  showWatermark: boolean;
+  watermarkText: string;
+  watermarkPosition: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
+  watermarkSize: number;
   // Export
-  exportFormat: "png" | "jpg";
-  exportScale: 1 | 2 | 3;
+  exportFormat: "png" | "jpg" | "webp";
+  exportScale: 1 | 2 | 3 | 4;
   // Actions
   setImage: (dataUrl: string, name: string) => void;
   clearImage: () => void;
@@ -59,6 +64,10 @@ export interface EditorState {
   setRotateX: (n: number) => void;
   setRotateY: (n: number) => void;
   setRotateZ: (n: number) => void;
+  setShowWatermark: (show: boolean) => void;
+  setWatermarkText: (text: string) => void;
+  setWatermarkPosition: (pos: EditorState["watermarkPosition"]) => void;
+  setWatermarkSize: (size: number) => void;
   setExportFormat: (fmt: EditorState["exportFormat"]) => void;
   setExportScale: (scale: EditorState["exportScale"]) => void;
   reset: () => void;
@@ -89,6 +98,10 @@ const initialState = {
   rotateX: 0,
   rotateY: 0,
   rotateZ: 0,
+  showWatermark: true,
+  watermarkText: "PrettyShot",
+  watermarkPosition: "bottom-right" as const,
+  watermarkSize: 100,
   exportFormat: "png" as const,
   exportScale: 2 as const,
 };
@@ -124,6 +137,11 @@ export const useEditorStore = create<EditorState>((set) => ({
   setRotateX: (rotateX) => set({ rotateX }),
   setRotateY: (rotateY) => set({ rotateY }),
   setRotateZ: (rotateZ) => set({ rotateZ }),
+
+  setShowWatermark: (showWatermark) => set({ showWatermark }),
+  setWatermarkText: (watermarkText) => set({ watermarkText }),
+  setWatermarkPosition: (watermarkPosition) => set({ watermarkPosition }),
+  setWatermarkSize: (watermarkSize) => set({ watermarkSize }),
 
   setExportFormat: (exportFormat) => set({ exportFormat }),
   setExportScale: (exportScale) => set({ exportScale }),

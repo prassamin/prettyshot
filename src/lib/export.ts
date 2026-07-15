@@ -1,7 +1,7 @@
-import { toPng, toJpeg } from "html-to-image";
+import { toPng, toJpeg, toCanvas } from "html-to-image";
 
 interface CaptureOptions {
-  format: "png" | "jpg";
+  format: "png" | "jpg" | "webp";
   scale: number;
 }
 
@@ -9,23 +9,29 @@ export async function captureElement(
   element: HTMLElement,
   options: CaptureOptions,
 ): Promise<string> {
-  const fn = options.format === "jpg" ? toJpeg : toPng;
-  return fn(element, {
-    pixelRatio: options.scale,
-    quality: options.format === "jpg" ? 0.95 : undefined,
-  });
+  const { format, scale } = options;
+  const opts = { pixelRatio: scale, quality: 0.95 };
+
+  if (format === "jpg") {
+    return toJpeg(element, opts);
+  }
+  if (format === "webp") {
+    const canvas = await toCanvas(element, opts);
+    return canvas.toDataURL("image/webp", 0.95);
+  }
+  // default png
+  return toPng(element, opts);
 }
 
 export function downloadImage(
   dataUrl: string,
   filename: string,
-  format: "png" | "jpg",
+  format: "png" | "jpg" | "webp",
 ) {
-  const ext = format === "jpg" ? "jpg" : "png";
   const name = filename.replace(/\.[^.]+$/, "") || "screenshot";
   const a = document.createElement("a");
   a.href = dataUrl;
-  a.download = `${name}-prettyshot.${ext}`;
+  a.download = `${name}-prettyshot.${format}`;
   a.click();
 }
 

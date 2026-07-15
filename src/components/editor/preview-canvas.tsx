@@ -109,6 +109,10 @@ export function PreviewCanvas() {
     rotateX,
     rotateY,
     rotateZ,
+    showWatermark,
+    watermarkText,
+    watermarkPosition,
+    watermarkSize,
   } = useEditorStore();
 
   const hasPerspective = rotateX !== 0 || rotateY !== 0 || rotateZ !== 0;
@@ -248,22 +252,36 @@ export function PreviewCanvas() {
           </DeviceFrameWrapper>
         )}
 
-        {/* PrettyShot watermark — hidden for Pro users */}
-        {!isPro && (
+        {/* Watermark — Forced on for Free users, toggleable/customizable for Pro */}
+        {(!isPro || showWatermark) && (
           <div
-            className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full px-2 py-0.5"
-            style={{ backgroundColor: "rgba(0,0,0,0.25)", zIndex: 2 }}
+            className={`prettyshot-watermark-react absolute flex items-center gap-1 rounded-full px-2 py-0.5 ${
+              watermarkPosition === "top-left"
+                ? "top-3 left-3"
+                : watermarkPosition === "top-right"
+                  ? "top-3 right-3"
+                  : watermarkPosition === "bottom-left"
+                    ? "bottom-3 left-3"
+                    : watermarkPosition === "center"
+                      ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                      : "bottom-3 right-3"
+            }`}
+            style={{ 
+              backgroundColor: "rgba(0,0,0,0.25)", 
+              zIndex: 2,
+              transform: watermarkPosition === "center" 
+                ? `translate(-50%, -50%) scale(${watermarkSize / 100})` 
+                : `scale(${watermarkSize / 100})`,
+              transformOrigin: watermarkPosition === "center"
+                ? "center center"
+                : watermarkPosition.replace("-", " ")
+            }}
           >
-            <Sparkles
-              className="text-white"
-              style={{ width: "10px", height: "10px" }}
-              strokeWidth={2.5}
-            />
             <span
               className="font-semibold text-white"
               style={{ fontSize: "10px", lineHeight: "16px", opacity: 0.9 }}
             >
-              PrettyShot
+              {!isPro ? "PrettyShot" : watermarkText || "PrettyShot"}
             </span>
           </div>
         )}

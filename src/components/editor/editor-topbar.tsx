@@ -13,14 +13,16 @@ import {
 } from "lucide-react";
 import { Button } from "@heroui/react";
 import { useEditorStore } from "@/stores/editor-store";
+import { useAppStore } from "@/stores/app-store";
 import { captureElement, downloadImage, copyToClipboard } from "@/lib/export";
+import { useRouter } from "@/hooks/use-router";
 import { AspectRatioDropdown } from "./aspect-ratio-dropdown";
 
 export function EditorTopbar() {
   const {
     imageName,
     image,
-    clearImage,
+    setImage,
     exportFormat,
     exportScale,
     setExportFormat,
@@ -35,6 +37,8 @@ export function EditorTopbar() {
     height: number;
   } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   /* close on outside click */
   useEffect(() => {
@@ -61,40 +65,110 @@ export function EditorTopbar() {
     setOutputInfo({ width: w, height: h });
   }, [open, exportFormat, exportScale]);
 
+  const { user } = useAppStore();
+  const isPro = user?.is_pro === true;
+
+  const handleProAction = (action: () => void) => {
+    if (!isPro) {
+      router.push("/login", { auth: true, next: "/checkout" });
+      return;
+    }
+    action();
+  };
+
+  // Safely inject watermark for Free users during export
+  const withForcedWatermark = async (
+    el: HTMLElement,
+    action: () => Promise<void>,
+  ) => {
+    let injectedNode: HTMLDivElement | null = null;
+    const originalNodes = Array.from(
+      el.querySelectorAll(".prettyshot-watermark-react"),
+    ) as HTMLElement[];
+
+    if (!isPro) {
+      // Hide any existing React watermarks (real or fake) so we don't get duplicates
+      originalNodes.forEach((node) => {
+        node.style.display = "none";
+      });
+
+      // Inject an un-deletable manual watermark right before capture
+      injectedNode = document.createElement("div");
+      injectedNode.innerHTML = `
+        <span style="font-weight: 600; font-size: 10px; line-height: 16px; opacity: 0.9; color: white; font-family: inherit;">PrettyShot</span>
+      `;
+      injectedNode.style.cssText =
+        "position: absolute; bottom: 12px; right: 12px; display: flex; align-items: center; gap: 4px; border-radius: 9999px; padding: 2px 8px; background-color: rgba(0,0,0,0.25); z-index: 9999;";
+      el.appendChild(injectedNode);
+    }
+
+    try {
+      await action();
+    } finally {
+      if (injectedNode && injectedNode.parentNode === el) {
+        el.removeChild(injectedNode);
+      }
+      originalNodes.forEach((node) => {
+        node.style.display = "";
+      });
+    }
+  };
+
   const handleDownload = useCallback(async () => {
     const el = document.getElementById("capture-area");
     if (!el) return;
     setExporting(true);
+
     try {
-      const { exportFormat, exportScale, imageName } =
-        useEditorStore.getState();
-      const dataUrl = await captureElement(el, {
-        format: exportFormat,
-        scale: exportScale,
+      await withForcedWatermark(el, async () => {
+        const { exportFormat, exportScale, imageName } =
+          useEditorStore.getState();
+        const dataUrl = await captureElement(el, {
+          format: exportFormat,
+          scale: exportScale,
+        });
+        downloadImage(dataUrl, imageName, exportFormat);
       });
-      downloadImage(dataUrl, imageName, exportFormat);
     } finally {
       setExporting(false);
       setOpen(false);
     }
-  }, []);
+  }, [isPro]);
 
   const handleCopy = useCallback(async () => {
     const el = document.getElementById("capture-area");
     if (!el) return;
+
     try {
-      const { exportScale } = useEditorStore.getState();
-      const dataUrl = await captureElement(el, {
-        format: "png",
-        scale: exportScale,
+      await withForcedWatermark(el, async () => {
+        const { exportScale } = useEditorStore.getState();
+        const dataUrl = await captureElement(el, {
+          format: "png",
+          scale: exportScale,
+        });
+        await copyToClipboard(dataUrl);
       });
-      await copyToClipboard(dataUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // clipboard may not be available
     }
-  }, []);
+  }, [isPro]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      setImage(result, file.name);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input so the same file can be selected again if needed
+    e.target.value = "";
+  };
 
   return (
     <motion.header
@@ -128,10 +202,17 @@ export function EditorTopbar() {
           transition={{ delay: 0.2 }}
           className="flex items-center gap-2"
         >
+          <input 
+            type="file" 
+            accept="image/*" 
+            className="hidden" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+          />
           <Button
             variant="ghost"
             size="sm"
-            onPress={clearImage}
+            onPress={() => fileInputRef.current?.click()}
             className="font-semibold text-zinc-500"
           >
             <ImagePlus className="size-4" />
@@ -168,48 +249,75 @@ export function EditorTopbar() {
                   className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl shadow-zinc-900/15"
                 >
                   {/* Format */}
-                  <div className="mb-3">
+                  <div className="mb-3 relative">
                     <span className="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">
                       Format
                     </span>
-                    <div className="mt-1.5 flex gap-1.5">
-                      {(["png", "jpg"] as const).map((fmt) => (
-                        <button
-                          key={fmt}
-                          onClick={() => setExportFormat(fmt)}
-                          className={`flex-1 rounded-lg py-1.5 text-xs font-bold uppercase transition-all ${
-                            exportFormat === fmt
-                              ? "bg-linear-to-r from-orange-500 to-rose-500 text-white shadow-sm"
-                              : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
-                          }`}
-                        >
-                          {fmt}
-                        </button>
-                      ))}
+                    <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+                      {(["png", "jpg", "webp"] as const).map((fmt) => {
+                        const isPremiumFormat = fmt === "webp";
+                        return (
+                          <button
+                            key={fmt}
+                            onClick={() => {
+                              if (isPremiumFormat && !isPro) handleProAction(() => {});
+                              else setExportFormat(fmt);
+                            }}
+                            className={`relative rounded-lg py-1.5 text-xs font-bold uppercase transition-all ${
+                              exportFormat === fmt
+                                ? "bg-linear-to-r from-orange-500 to-rose-500 text-white shadow-sm"
+                                : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                            }`}
+                          >
+                            {fmt}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
                   {/* Scale */}
-                  <div className="mb-4">
+                  <div className="mb-4 relative">
                     <span className="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">
                       Scale
                     </span>
-                    <div className="mt-1.5 flex gap-1.5">
-                      {([1, 2, 3] as const).map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => setExportScale(s)}
-                          className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all ${
-                            exportScale === s
-                              ? "bg-linear-to-r from-orange-500 to-rose-500 text-white shadow-sm"
-                              : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
-                          }`}
-                        >
-                          {s}x
-                        </button>
-                      ))}
+                    <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+                      {([1, 2, 3, 4] as const).map((s) => {
+                        const isPremiumScale = s > 1;
+                        return (
+                          <button
+                            key={s}
+                            onClick={() => {
+                              if (isPremiumScale && !isPro) handleProAction(() => {});
+                              else setExportScale(s);
+                            }}
+                            className={`relative rounded-lg py-1.5 text-xs font-bold transition-all ${
+                              exportScale === s
+                                ? "bg-linear-to-r from-orange-500 to-rose-500 text-white shadow-sm"
+                                : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                            }`}
+                          >
+                            {s}x
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {!isPro && (
+                    <div className="mb-4 rounded-xl border border-rose-200/50 bg-linear-to-br from-orange-50 to-rose-50 p-3">
+                      <h4 className="text-xs font-bold text-rose-900 text-center">Export Pro</h4>
+                      <p className="mt-1 text-[10px] font-medium text-rose-700/80 leading-relaxed text-center">
+                        Unlock WEBP and high-res (2x-4K) exports.
+                      </p>
+                      <Button
+                        onPress={() => router.push("/login", { auth: true, next: "/checkout" })}
+                        className="mt-2 w-full bg-linear-to-r from-orange-500 to-rose-500 font-bold text-white h-7 text-[10px]"
+                      >
+                        Upgrade
+                      </Button>
+                    </div>
+                  )}
 
                   {/* Output dimensions */}
                   {outputInfo && (
@@ -260,7 +368,7 @@ export function EditorTopbar() {
                       <div className="text-left">
                         <div>{copied ? "Copied!" : "Copy to Clipboard"}</div>
                         <div className="text-[10px] font-medium text-zinc-400">
-                          PNG at {exportScale}x scale
+                          Image at {exportScale}x scale
                         </div>
                       </div>
                     </button>

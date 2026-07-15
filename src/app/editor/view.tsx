@@ -11,6 +11,7 @@ import { PaddingControl } from "@/components/editor/controls/padding-control";
 import { BorderControl } from "@/components/editor/controls/border-control";
 import { ShadowControl } from "@/components/editor/controls/shadow-control";
 import { PerspectiveControl } from "@/components/editor/controls/perspective-control";
+import { WatermarkControl } from "@/components/editor/controls/watermark-control";
 import { useEditorStore } from "@/stores/editor-store";
 
 const sectionContent: Record<string, React.ReactNode> = {
@@ -20,6 +21,7 @@ const sectionContent: Record<string, React.ReactNode> = {
   border: <BorderControl />,
   shadow: <ShadowControl />,
   perspective: <PerspectiveControl />,
+  watermark: <WatermarkControl />,
 };
 
 export function EditorView() {

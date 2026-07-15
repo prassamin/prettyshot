@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Palette, Maximize, Frame, Layers3, RotateCw, ChevronDown, Monitor } from "lucide-react";
+import { Palette, Maximize, Frame, Layers3, RotateCw, ChevronDown, Monitor, Stamp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /* ─── section config ─── */
@@ -50,6 +50,12 @@ const sections: Section[] = [
     label: "Perspective",
     icon: <RotateCw className="size-4" />,
     gradient: "from-pink-400 to-rose-500",
+  },
+  {
+    id: "watermark",
+    label: "Watermark",
+    icon: <Stamp className="size-4" />,
+    gradient: "from-rose-400 to-red-500",
   },
 ];
 
