@@ -24,7 +24,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
     "Drop any screenshot, pick a style, and export a beautiful image in seconds. Gradient backgrounds, shadows, noise, perspective, zero signup, totally free.";
   return {
     metadataBase: new URL(origin),
-    title: title,
+    title: { default: title, template: `%s | ${APP_NAME}` },
     description: description,
     keywords: [
       "screenshot beautifier",
@@ -36,6 +36,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
       "image beautifier",
       "free screenshot tool",
       "social media screenshot",
+      "screenshot",
       "product hunt screenshot",
     ],
     publisher: DEVELOPED_BY,
@@ -86,11 +87,12 @@ export default async function RootLayout({
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_pro")
+      .select("is_pro, polar_order_id")
       .eq("id", user.id)
       .single();
 
     (user as any).is_pro = profile?.is_pro;
+    (user as any).polar_order_id = profile?.polar_order_id;
   }
   return (
     <html

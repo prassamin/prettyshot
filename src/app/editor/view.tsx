@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { EditorTopbar } from "@/components/editor/editor-topbar";
-import { UploadZone } from "@/components/editor/upload-zone";
 import { PreviewCanvas } from "@/components/editor/preview-canvas";
 import { ControlsSidebar } from "@/components/editor/controls-sidebar";
 import { BackgroundControl } from "@/components/editor/controls/background-control";
@@ -12,7 +11,6 @@ import { BorderControl } from "@/components/editor/controls/border-control";
 import { ShadowControl } from "@/components/editor/controls/shadow-control";
 import { PerspectiveControl } from "@/components/editor/controls/perspective-control";
 import { WatermarkControl } from "@/components/editor/controls/watermark-control";
-import { useEditorStore } from "@/stores/editor-store";
 
 const sectionContent: Record<string, React.ReactNode> = {
   background: <BackgroundControl />,
@@ -25,8 +23,6 @@ const sectionContent: Record<string, React.ReactNode> = {
 };
 
 export function EditorView() {
-  const image = useEditorStore((s) => s.image);
-
   return (
     <div className="flex h-dvh flex-col bg-linear-to-br from-orange-50/80 via-rose-50/40 to-violet-50/60">
       <EditorTopbar />

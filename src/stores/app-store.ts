@@ -5,6 +5,7 @@ import { User as SupaUser } from "@supabase/supabase-js";
 
 export interface User extends SupaUser {
   is_pro: boolean;
+  polar_order_id?: string;
 }
 
 export interface AppState {

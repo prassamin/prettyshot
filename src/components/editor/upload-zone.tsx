@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ImagePlus, Clipboard, Upload } from "lucide-react";
+import { ImagePlus } from "lucide-react";
 import { Button } from "@heroui/react";
 import { useEditorStore } from "@/stores/editor-store";
 

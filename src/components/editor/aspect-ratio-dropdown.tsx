@@ -93,13 +93,12 @@ export function AspectRatioDropdown() {
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
-        variant="flat"
-        size="sm"
+         size="sm"
         onPress={() => setOpen(!open)}
         className="flex items-center gap-1.5 bg-zinc-100 text-xs font-semibold text-zinc-700 hover:bg-zinc-200"
       >
         <LayoutTemplate className="size-3.5" />
-        <span className="min-w-[40px] text-left">{currentLabel}</span>
+        <span className="min-w-10 text-left">{currentLabel}</span>
         <ChevronDown className={`size-3.5 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </Button>
 
@@ -110,7 +109,7 @@ export function AspectRatioDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute top-full left-1/2 mt-2 w-[340px] -translate-x-1/2 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-1 shadow-2xl shadow-zinc-900/15"
+            className="absolute top-full left-1/2 mt-2 w-85 -translate-x-1/2 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-1 shadow-2xl shadow-zinc-900/15"
             style={{ maxHeight: "70vh", overflowY: "auto" }}
           >
             <div className="p-3">

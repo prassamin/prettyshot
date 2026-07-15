@@ -198,7 +198,7 @@ function MockScreenshot() {
               <div className="ml-4 flex-1">
                 <div className="mx-auto flex h-6 max-w-50 items-center justify-center rounded-lg bg-zinc-800 text-[11px] font-medium text-zinc-400">
                   <span className="mr-1 text-emerald-400">●</span>
-                  prettyshot.app
+                  {window.location.host}
                 </div>
               </div>
               <div className="w-15" />
@@ -382,7 +382,9 @@ export function Hero() {
             animate="visible"
             className="text-4xl font-extrabold leading-[1.08] tracking-tight text-zinc-900 sm:text-6xl md:text-7xl"
           >
-            <span className="sr-only">Every screenshot deserves to be remembered</span>
+            <span className="sr-only">
+              Every screenshot deserves to be remembered
+            </span>
             {headlineWords.map((word) => (
               <motion.span
                 key={word}

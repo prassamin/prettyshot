@@ -17,6 +17,7 @@ import {
   Sparkles,
   CreditCard,
   Zap,
+  Home,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { APP_NAME, APP_GITHUB_URL } from "@/config";
@@ -193,6 +194,7 @@ export function Navbar() {
                         onAction={(key) => {
                           if (key === "upgrade") router.push("/#pricing");
                           if (key === "editor") router.push("/editor");
+                          if (key === "dashboard") router.push("/dashboard");
                           if (key === "logout") {
                             supabase.auth.signOut().then(() => {
                               setUser(null);
@@ -226,6 +228,22 @@ export function Navbar() {
                                 {user.email?.charAt(0).toUpperCase()}
                               </Avatar.Fallback>
                             </Avatar>
+                          </div>
+                        </Dropdown.Item>
+
+                        <Dropdown.Item
+                          id="dashboard"
+                          textValue="Dashboard"
+                          className="p-0 rounded-xl mb-1 data-[hover=true]:bg-zinc-100/80"
+                        >
+                          <div className="flex w-full items-center gap-2.5 px-3 py-2 cursor-pointer">
+                            <Home
+                              className="size-[18px] text-zinc-700 shrink-0"
+                              strokeWidth={1.8}
+                            />
+                            <span className="text-[14px] font-medium text-zinc-800">
+                              Dashboard
+                            </span>
                           </div>
                         </Dropdown.Item>
 

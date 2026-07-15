@@ -62,7 +62,7 @@ export default function LoginPage() {
               <div className="size-3 rounded-full bg-[#28c840] shadow-inner shadow-white/50" />
             </div>
             <div className="flex items-center gap-1.5 rounded-md bg-white/50 px-3 py-1 text-[11px] font-semibold text-zinc-500 shadow-sm">
-              prettyshot.app
+              {window.location.host}
             </div>
             <div className="w-16" /> {/* Spacer for symmetry */}
           </div>
@@ -121,7 +121,7 @@ export default function LoginPage() {
                   onPress={handleGoogleLogin}
                   isDisabled={isLoading}
                 >
-                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] transition-transform duration-1000 group-hover:translate-x-[100%]" />
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full transition-transform duration-1000 group-hover:translate-x-full" />
                   {isLoading ? (
                     <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
                   ) : (

@@ -19,6 +19,7 @@
     "@heroui/react": "^3.0.1",
     "@heroui/styles": "^3.0.1",
     "@polar-sh/nextjs": "^0.9.6",
+    "@polar-sh/sdk": "^0.48.1",
     "@supabase/ssr": "^0.12.1",
     "@supabase/supabase-js": "^2.110.3",
     "@tanstack/react-query": "^5.95.2",

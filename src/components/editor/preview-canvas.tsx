@@ -2,7 +2,7 @@
 
 import { useRef, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Minus, Square, X } from "lucide-react";
+import { Minus, Square, X } from "lucide-react";
 import { useEditorStore } from "@/stores/editor-store";
 import { useAppStore } from "@/stores/app-store";
 import { SHADOW_PRESETS } from "@/lib/presets";
@@ -21,13 +21,57 @@ function DeviceFrameWrapper({
 }) {
   if (frame === "macos") {
     return (
-      <div style={{ ...style, overflow: "hidden", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
-        <div style={{ display: "flex", alignItems: "center", padding: "12px 16px", gap: "8px", backgroundColor: "rgba(255, 255, 255, 0.95)", borderBottom: "1px solid rgba(0,0,0,0.06)", zIndex: 10 }}>
-          <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#ff5f56", border: "1px solid #e0443e" }} />
-          <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#ffbd2e", border: "1px solid #dea123" }} />
-          <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#27c93f", border: "1px solid #1aab29" }} />
+      <div
+        style={{
+          ...style,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#fff",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "12px 16px",
+            gap: "8px",
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            zIndex: 10,
+          }}
+        >
+          <div
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              backgroundColor: "#ff5f56",
+              border: "1px solid #e0443e",
+            }}
+          />
+          <div
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              backgroundColor: "#ffbd2e",
+              border: "1px solid #dea123",
+            }}
+          />
+          <div
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              backgroundColor: "#27c93f",
+              border: "1px solid #1aab29",
+            }}
+          />
         </div>
-        <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
+        <div
+          style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}
+        >
           {children}
         </div>
       </div>
@@ -36,13 +80,38 @@ function DeviceFrameWrapper({
 
   if (frame === "windows") {
     return (
-      <div style={{ ...style, overflow: "hidden", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", backgroundColor: "#f3f3f3", borderBottom: "1px solid rgba(0,0,0,0.06)", zIndex: 10 }}>
-          <div style={{ padding: "10px 16px", color: "#666" }}><Minus className="size-3.5" /></div>
-          <div style={{ padding: "10px 16px", color: "#666" }}><Square className="size-3" /></div>
-          <div style={{ padding: "10px 16px", color: "#666" }}><X className="size-4" /></div>
+      <div
+        style={{
+          ...style,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#fff",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            backgroundColor: "#f3f3f3",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            zIndex: 10,
+          }}
+        >
+          <div style={{ padding: "10px 16px", color: "#666" }}>
+            <Minus className="size-3.5" />
+          </div>
+          <div style={{ padding: "10px 16px", color: "#666" }}>
+            <Square className="size-3" />
+          </div>
+          <div style={{ padding: "10px 16px", color: "#666" }}>
+            <X className="size-4" />
+          </div>
         </div>
-        <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
+        <div
+          style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}
+        >
           {children}
         </div>
       </div>
@@ -51,8 +120,26 @@ function DeviceFrameWrapper({
 
   if (frame === "glass") {
     return (
-      <div style={{ ...style, overflow: "hidden", display: "flex", padding: "16px", backgroundColor: "rgba(255, 255, 255, 0.25)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
-        <div style={{ display: "flex", flex: 1, overflow: "hidden", borderRadius: Math.max(0, borderRadius - 16), border: "1px solid rgba(255,255,255,0.4)" }}>
+      <div
+        style={{
+          ...style,
+          overflow: "hidden",
+          display: "flex",
+          padding: "16px",
+          backgroundColor: "rgba(255, 255, 255, 0.25)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            overflow: "hidden",
+            borderRadius: Math.max(0, borderRadius - 16),
+            border: "1px solid rgba(255,255,255,0.4)",
+          }}
+        >
           {children}
         </div>
       </div>
@@ -200,13 +287,18 @@ export function PreviewCanvas() {
               position: "relative",
               zIndex: 1,
               borderRadius: `${borderRadius}px`,
-              border: borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : undefined,
+              border:
+                borderWidth > 0
+                  ? `${borderWidth}px solid ${borderColor}`
+                  : undefined,
               boxShadow: shadow,
               maxWidth: "100%",
               maxHeight: "100%",
               flexShrink: 1,
               ...(hasPerspective
-                ? { transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)` }
+                ? {
+                    transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`,
+                  }
                 : {}),
             }}
           >
@@ -237,16 +329,23 @@ export function PreviewCanvas() {
               height: aspectRatio ? "100%" : "auto",
               alignSelf: "stretch",
               borderRadius: `${borderRadius}px`,
-              border: borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : undefined,
+              border:
+                borderWidth > 0
+                  ? `${borderWidth}px solid ${borderColor}`
+                  : undefined,
               boxShadow: shadow,
               backgroundColor: "rgba(255, 255, 255, 0.6)",
               backdropFilter: "blur(12px)",
               ...(hasPerspective
-                ? { transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)` }
+                ? {
+                    transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`,
+                  }
                 : {}),
             }}
           >
-            <div style={{ display: "flex", flex: 1, minWidth: 0, minHeight: 0 }}>
+            <div
+              style={{ display: "flex", flex: 1, minWidth: 0, minHeight: 0 }}
+            >
               <UploadZone />
             </div>
           </DeviceFrameWrapper>
@@ -266,15 +365,17 @@ export function PreviewCanvas() {
                       ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                       : "bottom-3 right-3"
             }`}
-            style={{ 
-              backgroundColor: "rgba(0,0,0,0.25)", 
+            style={{
+              backgroundColor: "rgba(0,0,0,0.25)",
               zIndex: 2,
-              transform: watermarkPosition === "center" 
-                ? `translate(-50%, -50%) scale(${watermarkSize / 100})` 
-                : `scale(${watermarkSize / 100})`,
-              transformOrigin: watermarkPosition === "center"
-                ? "center center"
-                : watermarkPosition.replace("-", " ")
+              transform:
+                watermarkPosition === "center"
+                  ? `translate(-50%, -50%) scale(${watermarkSize / 100})`
+                  : `scale(${watermarkSize / 100})`,
+              transformOrigin:
+                watermarkPosition === "center"
+                  ? "center center"
+                  : watermarkPosition.replace("-", " "),
             }}
           >
             <span
