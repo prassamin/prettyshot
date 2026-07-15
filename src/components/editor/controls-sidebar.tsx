@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Palette, Maximize, Circle, Layers3, RotateCw, ChevronDown } from "lucide-react";
+import { Palette, Maximize, Frame, Layers3, RotateCw, ChevronDown, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /* ─── section config ─── */
@@ -22,15 +22,21 @@ const sections: Section[] = [
     gradient: "from-orange-400 to-rose-400",
   },
   {
+    id: "frame",
+    label: "Device Frame",
+    icon: <Monitor className="size-4" />,
+    gradient: "from-amber-400 to-orange-500",
+  },
+  {
     id: "padding",
     label: "Padding & Size",
     icon: <Maximize className="size-4" />,
     gradient: "from-sky-400 to-blue-500",
   },
   {
-    id: "corners",
-    label: "Corners",
-    icon: <Circle className="size-4" />,
+    id: "border",
+    label: "Border & Corners",
+    icon: <Frame className="size-4" />,
     gradient: "from-violet-400 to-purple-500",
   },
   {
@@ -110,7 +116,7 @@ interface ControlsSidebarProps {
 
 export function ControlsSidebar({ sectionContent }: ControlsSidebarProps) {
   const [openSections, setOpenSections] = useState<Set<string>>(
-    new Set(["background", "padding", "shadow"]),
+    new Set(["background", "frame", "padding"]),
   );
 
   function toggleSection(id: string) {

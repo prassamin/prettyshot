@@ -78,126 +78,48 @@ export function UploadZone() {
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full max-w-lg px-4"
-    >
+    <div className="flex h-auto w-full flex-1 items-center justify-center p-4 sm:p-6">
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className="relative"
+        onClick={() => fileInputRef.current?.click()}
+        className={`relative flex h-full w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl cursor-pointer border-2 border-dashed transition-all duration-300 ${
+          dragging
+            ? "border-orange-400 bg-orange-400/10 scale-[1.02]"
+            : "border-zinc-400/40 bg-white/20 hover:bg-white/40"
+        }`}
       >
-        {/* Animated dashed border */}
-        <div
-          className={`absolute -inset-px rounded-3xl transition-all duration-500 ${
-            dragging
-              ? "bg-linear-to-br from-orange-400 via-rose-400 to-violet-500 opacity-100"
-              : "bg-linear-to-br from-zinc-300/50 via-zinc-200/30 to-zinc-300/50 opacity-100"
-          }`}
-          style={{
-            mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-            WebkitMask:
-              "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-            maskComposite: "xor",
-            WebkitMaskComposite: "xor",
-            padding: "2px",
-          }}
-        />
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <div className="flex size-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-zinc-200/50">
+            <ImagePlus className="size-6 text-zinc-500" strokeWidth={1.5} />
+          </div>
 
-        {/* Glow behind on drag */}
-        <AnimatePresence>
-          {dragging && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute -inset-4 rounded-[2rem] bg-linear-to-br from-orange-400/20 via-rose-400/15 to-violet-500/20 blur-2xl"
-            />
-          )}
-        </AnimatePresence>
-
-        <div
-          className={`relative flex flex-col items-center gap-5 rounded-3xl px-8 py-14 text-center transition-all duration-500 sm:py-16 ${
-            dragging ? "bg-orange-50/80 scale-[1.02]" : "bg-white/50"
-          }`}
-        >
-          {/* Icon */}
-          <motion.div
-            animate={
-              dragging
-                ? { scale: 1.15, rotate: -6, y: -4 }
-                : { scale: 1, rotate: 0, y: 0 }
-            }
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          >
-            <div
-              className={`flex size-20 items-center justify-center rounded-3xl shadow-xl transition-all duration-500 ${
-                dragging
-                  ? "bg-linear-to-br from-orange-400 via-rose-400 to-violet-500 shadow-rose-300/40"
-                  : "bg-linear-to-br from-orange-100 via-rose-50 to-violet-100 shadow-orange-200/30"
-              }`}
-            >
-              <ImagePlus
-                className={`size-9 transition-colors duration-500 ${
-                  dragging ? "text-white" : "text-orange-400"
-                }`}
-                strokeWidth={1.5}
-              />
-            </div>
-          </motion.div>
-
-          {/* Text */}
-          <div>
-            <motion.p
-              className="text-lg font-bold text-zinc-700"
-              animate={dragging ? { scale: 1.05 } : { scale: 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            >
-              {dragging
-                ? "Drop it like it's hot!"
-                : "Drop your screenshot here"}
-            </motion.p>
-            <p className="mt-1.5 text-sm font-medium text-zinc-400">
-              PNG, JPG, or WebP - up to any size
+          <div className="text-center">
+            <h3 className="text-base font-semibold text-zinc-800">
+              {dragging ? "Drop to upload" : "Upload Screenshot"}
+            </h3>
+            <p className="mt-1 text-xs font-medium text-zinc-500">
+              Drag & drop, paste, or click to browse
             </p>
           </div>
 
-          {/* Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
-            <Button
-              variant="primary"
-              size="md"
-              onPress={() => fileInputRef.current?.click()}
-              className="bg-linear-to-r from-orange-500 via-rose-500 to-violet-500 font-semibold text-white shadow-lg shadow-rose-400/20"
-            >
-              <Upload className="size-4" />
-              Browse Files
-            </Button>
-
-            <div className="flex items-center gap-2 rounded-full bg-zinc-100/80 px-4 py-2 text-xs font-semibold text-zinc-400">
-              <Clipboard className="size-3.5" />
-              <span>
-                Paste{" "}
-                <kbd className="rounded bg-zinc-200/80 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500">
-                  ⌘V
-                </kbd>
-              </span>
-            </div>
-          </div>
-
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ACCEPTED_TYPES.join(",")}
-            onChange={handleFileChange}
-            className="hidden"
-          />
+          <Button
+            size="sm"
+            className="mt-2 border border-zinc-200 bg-white font-medium text-zinc-700 shadow-sm hover:bg-zinc-50"
+          >
+            Select Image
+          </Button>
         </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ACCEPTED_TYPES.join(",")}
+          onChange={handleFileChange}
+          className="hidden"
+        />
       </div>
-    </motion.div>
+    </div>
   );
 }

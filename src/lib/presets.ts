@@ -93,6 +93,52 @@ export const ASPECT_RATIOS: AspectRatioPreset[] = [
   { name: "9:16", value: 9 / 16 },
 ];
 
+export interface ProAspectRatioPreset {
+  name: string;
+  label: string;
+  width: number;
+  height: number;
+}
+
+export const PRO_ASPECT_RATIOS: Record<string, ProAspectRatioPreset[]> = {
+  Standard: [
+    { name: "16:9", label: "16:9", width: 16, height: 9 },
+    { name: "3:2", label: "3:2", width: 3, height: 2 },
+    { name: "4:3", label: "4:3", width: 4, height: 3 },
+    { name: "5:4", label: "5:4", width: 5, height: 4 },
+    { name: "1:1", label: "1:1", width: 1, height: 1 },
+    { name: "4:5", label: "4:5", width: 4, height: 5 },
+    { name: "3:4", label: "3:4", width: 3, height: 4 },
+    { name: "2:3", label: "2:3", width: 2, height: 3 },
+    { name: "9:16", label: "9:16", width: 9, height: 16 },
+  ],
+  Instagram: [
+    { name: "Post", label: "1:1", width: 1080, height: 1080 },
+    { name: "Portrait", label: "4:5", width: 1080, height: 1350 },
+    { name: "Story", label: "9:16", width: 1080, height: 1920 },
+  ],
+  Twitter: [
+    { name: "Tweet", label: "16:9", width: 1600, height: 900 },
+    { name: "Cover", label: "3:1", width: 1500, height: 500 },
+  ],
+  YouTube: [
+    { name: "Thumbnail", label: "16:9", width: 1280, height: 720 },
+    { name: "Shorts", label: "9:16", width: 1080, height: 1920 },
+    { name: "Banner", label: "16:9", width: 2560, height: 1440 },
+  ],
+  LinkedIn: [
+    { name: "Post", label: "1:1", width: 1200, height: 1200 },
+    { name: "Cover", label: "4:1", width: 1128, height: 191 },
+  ],
+  Facebook: [
+    { name: "Post", label: "1.91:1", width: 1200, height: 630 },
+    { name: "Cover", label: "16:9", width: 820, height: 312 },
+  ],
+  OpenGraph: [
+    { name: "OG Image", label: "1.91:1", width: 1200, height: 630 },
+  ],
+};
+
 /* ─── mesh gradient presets ─── */
 
 export interface MeshGradientPreset {

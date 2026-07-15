@@ -2,9 +2,69 @@
 
 import { useRef, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Minus, Square, X } from "lucide-react";
 import { useEditorStore } from "@/stores/editor-store";
+import { useAppStore } from "@/stores/app-store";
 import { SHADOW_PRESETS } from "@/lib/presets";
+import { UploadZone } from "./upload-zone";
+
+function DeviceFrameWrapper({
+  frame,
+  children,
+  style,
+  borderRadius,
+}: {
+  frame: "none" | "macos" | "windows" | "glass";
+  children: React.ReactNode;
+  style: React.CSSProperties;
+  borderRadius: number;
+}) {
+  if (frame === "macos") {
+    return (
+      <div style={{ ...style, overflow: "hidden", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
+        <div style={{ display: "flex", alignItems: "center", padding: "12px 16px", gap: "8px", backgroundColor: "rgba(255, 255, 255, 0.95)", borderBottom: "1px solid rgba(0,0,0,0.06)", zIndex: 10 }}>
+          <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#ff5f56", border: "1px solid #e0443e" }} />
+          <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#ffbd2e", border: "1px solid #dea123" }} />
+          <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#27c93f", border: "1px solid #1aab29" }} />
+        </div>
+        <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  if (frame === "windows") {
+    return (
+      <div style={{ ...style, overflow: "hidden", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", backgroundColor: "#f3f3f3", borderBottom: "1px solid rgba(0,0,0,0.06)", zIndex: 10 }}>
+          <div style={{ padding: "10px 16px", color: "#666" }}><Minus className="size-3.5" /></div>
+          <div style={{ padding: "10px 16px", color: "#666" }}><Square className="size-3" /></div>
+          <div style={{ padding: "10px 16px", color: "#666" }}><X className="size-4" /></div>
+        </div>
+        <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  if (frame === "glass") {
+    return (
+      <div style={{ ...style, overflow: "hidden", display: "flex", padding: "16px", backgroundColor: "rgba(255, 255, 255, 0.25)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
+        <div style={{ display: "flex", flex: 1, overflow: "hidden", borderRadius: Math.max(0, borderRadius - 16), border: "1px solid rgba(255,255,255,0.4)" }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ ...style, overflow: "hidden", display: "flex" }}>
+      {children}
+    </div>
+  );
+}
 
 /** Generate a tileable noise texture as a base64 PNG data URL */
 function generateNoiseTexture(size = 150): string {
@@ -27,6 +87,8 @@ function generateNoiseTexture(size = 150): string {
 
 export function PreviewCanvas() {
   const captureRef = useRef<HTMLDivElement>(null);
+  const { user } = useAppStore();
+  const isPro = user?.is_pro === true;
 
   const {
     image,
@@ -37,6 +99,9 @@ export function PreviewCanvas() {
     bgImage,
     padding,
     borderRadius,
+    borderWidth,
+    borderColor,
+    deviceFrame,
     shadowPreset,
     shadowColor,
     aspectRatio,
@@ -83,13 +148,13 @@ export function PreviewCanvas() {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="flex h-full w-full items-center justify-center p-6 select-none"
+      className="flex h-full w-full min-h-0 min-w-0 items-center justify-center p-6 select-none"
     >
       {/* Capture area — exported via html-to-image */}
       <div
         ref={captureRef}
         id="capture-area"
-        className={`relative flex items-center justify-center ${bgClassName}`}
+        className={`relative flex flex-col items-center justify-center ${bgClassName}`}
         style={{
           ...bgStyle,
           padding: `${padding}px`,
@@ -102,6 +167,8 @@ export function PreviewCanvas() {
             : { maxWidth: "100%", maxHeight: "100%" }),
           width: "fit-content",
           height: "fit-content",
+          minWidth: 0,
+          minHeight: 0,
           ...(hasPerspective ? { perspective: "800px" } : {}),
         }}
       >
@@ -120,45 +187,86 @@ export function PreviewCanvas() {
           />
         )}
 
-        {/* Screenshot image */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={image ?? ""}
-          alt="Screenshot"
-          style={{
-            display: "block",
-            borderRadius: `${borderRadius}px`,
-            boxShadow: shadow,
-            maxWidth: "100%",
-            maxHeight: "100%",
-            position: "relative",
-            zIndex: 1,
-            ...(hasPerspective
-              ? {
-                  transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`,
-                }
-              : {}),
-          }}
-          draggable={false}
-        />
-
-        {/* PrettyShot watermark — always present */}
-        <div
-          className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full px-2 py-0.5"
-          style={{ backgroundColor: "rgba(0,0,0,0.25)", zIndex: 2 }}
-        >
-          <Sparkles
-            className="text-white"
-            style={{ width: "10px", height: "10px" }}
-            strokeWidth={2.5}
-          />
-          <span
-            className="font-semibold text-white"
-            style={{ fontSize: "10px", lineHeight: "16px", opacity: 0.9 }}
+        {/* Screenshot image or Upload Dropzone */}
+        {image ? (
+          <DeviceFrameWrapper
+            frame={deviceFrame}
+            borderRadius={borderRadius}
+            style={{
+              position: "relative",
+              zIndex: 1,
+              borderRadius: `${borderRadius}px`,
+              border: borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : undefined,
+              boxShadow: shadow,
+              maxWidth: "100%",
+              maxHeight: "100%",
+              flexShrink: 1,
+              ...(hasPerspective
+                ? { transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)` }
+                : {}),
+            }}
           >
-            PrettyShot
-          </span>
-        </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={image}
+              alt="Screenshot"
+              style={{
+                display: "block",
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                minWidth: 0,
+                minHeight: 0,
+              }}
+              draggable={false}
+            />
+          </DeviceFrameWrapper>
+        ) : (
+          <DeviceFrameWrapper
+            frame={deviceFrame}
+            borderRadius={borderRadius}
+            style={{
+              position: "relative",
+              zIndex: 1,
+              width: "640px",
+              minHeight: aspectRatio ? "0" : "400px",
+              height: aspectRatio ? "100%" : "auto",
+              alignSelf: "stretch",
+              borderRadius: `${borderRadius}px`,
+              border: borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : undefined,
+              boxShadow: shadow,
+              backgroundColor: "rgba(255, 255, 255, 0.6)",
+              backdropFilter: "blur(12px)",
+              ...(hasPerspective
+                ? { transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)` }
+                : {}),
+            }}
+          >
+            <div style={{ display: "flex", flex: 1, minWidth: 0, minHeight: 0 }}>
+              <UploadZone />
+            </div>
+          </DeviceFrameWrapper>
+        )}
+
+        {/* PrettyShot watermark — hidden for Pro users */}
+        {!isPro && (
+          <div
+            className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full px-2 py-0.5"
+            style={{ backgroundColor: "rgba(0,0,0,0.25)", zIndex: 2 }}
+          >
+            <Sparkles
+              className="text-white"
+              style={{ width: "10px", height: "10px" }}
+              strokeWidth={2.5}
+            />
+            <span
+              className="font-semibold text-white"
+              style={{ fontSize: "10px", lineHeight: "16px", opacity: 0.9 }}
+            >
+              PrettyShot
+            </span>
+          </div>
+        )}
       </div>
     </motion.div>
   );

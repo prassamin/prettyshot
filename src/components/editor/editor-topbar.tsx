@@ -14,6 +14,7 @@ import {
 import { Button } from "@heroui/react";
 import { useEditorStore } from "@/stores/editor-store";
 import { captureElement, downloadImage, copyToClipboard } from "@/lib/export";
+import { AspectRatioDropdown } from "./aspect-ratio-dropdown";
 
 export function EditorTopbar() {
   const {
@@ -110,11 +111,13 @@ export function EditorTopbar() {
         <ArrowLeft className="size-4 text-zinc-400 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:text-zinc-700" />
       </Link>
 
-      {/* Center — filename */}
-      <div className="absolute left-1/2 -translate-x-1/2">
+      {/* Center — aspect ratio & filename */}
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
         <span className="hidden text-sm font-medium text-zinc-400 sm:block">
           {imageName || "Untitled"}
         </span>
+        <div className="hidden h-4 w-px bg-zinc-200 sm:block" />
+        <AspectRatioDropdown />
       </div>
 
       {/* Right — actions */}

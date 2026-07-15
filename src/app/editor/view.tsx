@@ -6,16 +6,18 @@ import { UploadZone } from "@/components/editor/upload-zone";
 import { PreviewCanvas } from "@/components/editor/preview-canvas";
 import { ControlsSidebar } from "@/components/editor/controls-sidebar";
 import { BackgroundControl } from "@/components/editor/controls/background-control";
+import { FrameControl } from "@/components/editor/controls/frame-control";
 import { PaddingControl } from "@/components/editor/controls/padding-control";
-import { RadiusControl } from "@/components/editor/controls/radius-control";
+import { BorderControl } from "@/components/editor/controls/border-control";
 import { ShadowControl } from "@/components/editor/controls/shadow-control";
 import { PerspectiveControl } from "@/components/editor/controls/perspective-control";
 import { useEditorStore } from "@/stores/editor-store";
 
 const sectionContent: Record<string, React.ReactNode> = {
   background: <BackgroundControl />,
+  frame: <FrameControl />,
   padding: <PaddingControl />,
-  corners: <RadiusControl />,
+  border: <BorderControl />,
   shadow: <ShadowControl />,
   perspective: <PerspectiveControl />,
 };
@@ -30,19 +32,17 @@ export function EditorView() {
       <div className="flex flex-1 overflow-hidden">
         {/* Preview area */}
         <div className="relative flex flex-1 items-center justify-center overflow-hidden">
-          {!image ? <UploadZone /> : <PreviewCanvas />}
+          <PreviewCanvas />
         </div>
 
-        {image && (
-          <motion.aside
-            initial={{ x: 40, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="hidden w-85 shrink-0 border-l border-zinc-200/60 bg-white/60 backdrop-blur-xl lg:block"
-          >
-            <ControlsSidebar sectionContent={sectionContent} />
-          </motion.aside>
-        )}
+        <motion.aside
+          initial={{ x: 40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="hidden w-85 shrink-0 border-l border-zinc-200/60 bg-white/60 backdrop-blur-xl lg:block z-10"
+        >
+          <ControlsSidebar sectionContent={sectionContent} />
+        </motion.aside>
       </div>
     </div>
   );

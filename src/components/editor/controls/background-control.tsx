@@ -2,8 +2,10 @@
 
 import { useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Upload, Sparkles } from "lucide-react";
+import { Upload, Sparkles, Lock } from "lucide-react";
 import { useEditorStore } from "@/stores/editor-store";
+import { useAppStore } from "@/stores/app-store";
+import { useRouter } from "@/hooks/use-router";
 import {
   GRADIENT_PRESETS,
   MESH_GRADIENT_PRESETS,
@@ -57,6 +59,10 @@ export function BackgroundControl() {
     noiseOpacity,
     setNoiseOpacity,
   } = useEditorStore();
+
+  const { user } = useAppStore();
+  const isPro = user?.is_pro === true;
+  const router = useRouter();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -187,7 +193,25 @@ export function BackgroundControl() {
       {/* Image upload */}
       {bgType === "image" && (
         <div className="space-y-2">
-          {bgImage ? (
+          {!isPro ? (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50/50 p-6 text-center">
+              <div className="flex size-10 items-center justify-center rounded-full bg-violet-100 text-violet-600 shadow-sm">
+                <Lock className="size-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-violet-900">Pro Feature</h4>
+                <p className="mt-0.5 text-xs font-medium text-violet-600/80">
+                  Upgrade to use custom backgrounds.
+                </p>
+              </div>
+              <button 
+                onClick={() => router.push("/login", { auth: true, next: "/checkout" })}
+                className="mt-1 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 px-4 py-1.5 text-xs font-bold text-white shadow-md shadow-violet-500/25 transition-transform hover:scale-105"
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          ) : bgImage ? (
             <div className="relative overflow-hidden rounded-xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

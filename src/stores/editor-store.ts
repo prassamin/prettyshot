@@ -20,6 +20,9 @@ export interface EditorState {
   // Styling
   padding: number;
   borderRadius: number;
+  borderWidth: number;
+  borderColor: string;
+  deviceFrame: "none" | "macos" | "windows" | "glass";
   shadowPreset: string;
   shadowColor: string;
   aspectRatio: number | null;
@@ -43,6 +46,9 @@ export interface EditorState {
   setBgImage: (dataUrl: string) => void;
   setPadding: (n: number) => void;
   setBorderRadius: (n: number) => void;
+  setBorderWidth: (n: number) => void;
+  setBorderColor: (color: string) => void;
+  setDeviceFrame: (frame: EditorState["deviceFrame"]) => void;
   setShadowPreset: (name: string) => void;
   setShadowColor: (hex: string) => void;
   setAspectRatio: (value: number | null) => void;
@@ -70,6 +76,9 @@ const initialState = {
   bgImage: null,
   padding: 48,
   borderRadius: 16,
+  borderWidth: 0,
+  borderColor: "rgba(255, 255, 255, 0.4)",
+  deviceFrame: "none" as const,
   shadowPreset: SHADOW_PRESETS[2].name, // "Medium"
   shadowColor: "#000000",
   aspectRatio: null,
@@ -100,6 +109,9 @@ export const useEditorStore = create<EditorState>((set) => ({
 
   setPadding: (padding) => set({ padding }),
   setBorderRadius: (borderRadius) => set({ borderRadius }),
+  setBorderWidth: (borderWidth) => set({ borderWidth }),
+  setBorderColor: (borderColor) => set({ borderColor }),
+  setDeviceFrame: (deviceFrame) => set({ deviceFrame }),
   setShadowPreset: (shadowPreset) => set({ shadowPreset }),
   setShadowColor: (shadowColor) => set({ shadowColor }),
   setAspectRatio: (aspectRatio) => set({ aspectRatio }),
