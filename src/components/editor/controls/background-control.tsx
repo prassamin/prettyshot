@@ -110,19 +110,19 @@ export function BackgroundControl() {
 
       {/* Gradient swatches */}
       {bgType === "gradient" && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="flex flex-wrap gap-2">
           {GRADIENT_PRESETS.map((preset) => (
             <button
               key={preset.name}
               onClick={() => setBgGradient(preset.className)}
-              className="group relative"
+              className="group relative shrink-0"
               title={preset.name}
             >
               {bgGradient === preset.className && (
                 <div className="absolute -inset-1 rounded-xl bg-linear-to-br from-orange-400 to-violet-500 opacity-60" />
               )}
               <div
-                className={`relative h-12 rounded-lg bg-linear-to-br ${preset.className} ring-1 ring-black/5 transition-transform group-hover:scale-105`}
+                className={`relative size-10 rounded-lg bg-linear-to-br ${preset.className} ring-1 ring-black/5 transition-transform group-hover:scale-105`}
               />
             </button>
           ))}
@@ -131,12 +131,12 @@ export function BackgroundControl() {
 
       {/* Mesh gradient swatches */}
       {bgType === "mesh" && (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="flex flex-wrap gap-2">
           {MESH_GRADIENT_PRESETS.map((preset) => (
             <button
               key={preset.src}
               onClick={() => setBgMesh(preset.src)}
-              className="group relative"
+              className="group relative shrink-0"
               title={preset.name}
             >
               {bgMesh === preset.src && (
@@ -146,7 +146,7 @@ export function BackgroundControl() {
               <img
                 src={preset.src}
                 alt={preset.name}
-                className="relative h-14 w-full rounded-lg object-cover ring-1 ring-black/5 transition-transform group-hover:scale-105"
+                className="relative size-10 rounded-lg object-cover ring-1 ring-black/5 transition-transform group-hover:scale-105"
               />
             </button>
           ))}
@@ -156,18 +156,18 @@ export function BackgroundControl() {
       {/* Solid color */}
       {bgType === "solid" && (
         <div className="space-y-3">
-          <div className="grid grid-cols-8 gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {SOLID_COLOR_PRESETS.map((color) => (
               <button
                 key={color}
                 onClick={() => setBgSolid(color)}
-                className="group relative"
+                className="group relative shrink-0"
               >
                 {bgSolid === color && (
                   <div className="absolute -inset-0.5 rounded-lg bg-linear-to-br from-orange-400 to-violet-500 opacity-70" />
                 )}
                 <div
-                  className="relative size-8 rounded-md ring-1 ring-black/10 transition-transform group-hover:scale-110"
+                  className="relative size-10 rounded-md ring-1 ring-black/10 transition-transform group-hover:scale-110"
                   style={{ backgroundColor: color }}
                 />
               </button>

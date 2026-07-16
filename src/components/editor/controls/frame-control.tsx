@@ -29,7 +29,7 @@ export function FrameControl() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="flex flex-wrap gap-2">
         {frames.map((frame) => {
           const isSelected = deviceFrame === frame.id;
           const isLocked = !isPro && frame.id !== "none";
@@ -38,7 +38,7 @@ export function FrameControl() {
             <button
               key={frame.id}
               onClick={() => handleSetFrame(frame.id)}
-              className={`group relative flex flex-col items-center gap-2 rounded-xl border p-3 transition-all ${
+              className={`group relative flex flex-col size-20 justify-center items-center gap-2 rounded-xl border p-3 transition-all ${
                 isSelected
                   ? "border-orange-500 bg-orange-50/50 text-orange-600 shadow-sm"
                   : "border-transparent bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"

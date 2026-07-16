@@ -125,7 +125,7 @@
   * {
     @apply scroll-smooth;
   }
-  
+
   html {
     @apply overflow-x-hidden font-sans;
   }
@@ -140,7 +140,7 @@
   }
 
   ::-webkit-scrollbar {
-    @apply w-2;
+    @apply w-2 h-1.5;
   }
 
   ::-webkit-scrollbar-track {

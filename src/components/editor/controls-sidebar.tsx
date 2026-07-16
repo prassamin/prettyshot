@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Palette, Maximize, Frame, Layers3, RotateCw, ChevronDown, Monitor, Stamp } from "lucide-react";
+import {
+  Palette,
+  Maximize,
+  Frame,
+  Layers3,
+  RotateCw,
+  ChevronDown,
+  Monitor,
+  Stamp,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /* ─── section config ─── */
@@ -134,31 +143,95 @@ export function ControlsSidebar({ sectionContent }: ControlsSidebarProps) {
     });
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.1, duration: 0.3 }}
-      className="h-full overflow-y-auto"
-    >
-      <div className="border-b border-zinc-200/50 px-5 py-3">
-        <h2 className="text-xs font-bold tracking-wider text-zinc-400 uppercase">
-          Customize
-        </h2>
-      </div>
+  const [activeMobileTab, setActiveMobileTab] = useState<string>("background");
 
-      {sections.map((section) => (
-        <AccordionSection
-          key={section.id}
-          section={section}
-          open={openSections.has(section.id)}
-          onToggle={() => toggleSection(section.id)}
-        >
-          {sectionContent?.[section.id] ?? (
-            <p className="text-xs text-zinc-400">Coming soon...</p>
-          )}
-        </AccordionSection>
-      ))}
-    </motion.div>
+  return (
+    <>
+      {/* Desktop Accordion Layout (hidden on mobile) */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+        className="hidden lg:block h-full overflow-y-auto"
+      >
+        <div className="border-b border-zinc-200/50 px-5 py-3 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+          <h2 className="text-xs font-bold tracking-wider text-zinc-400 uppercase">
+            Customize
+          </h2>
+        </div>
+
+        {sections.map((section) => (
+          <AccordionSection
+            key={section.id}
+            section={section}
+            open={openSections.has(section.id)}
+            onToggle={() => toggleSection(section.id)}
+          >
+            {sectionContent?.[section.id] ?? (
+              <p className="text-xs text-zinc-400">Coming soon...</p>
+            )}
+          </AccordionSection>
+        ))}
+      </motion.div>
+
+      {/* Mobile Tabs Layout (hidden on desktop) */}
+      <div className="flex lg:hidden flex-col h-full bg-white">
+        {/* Horizontal scrollable tab row */}
+        <div className="flex overflow-x-auto border-b border-zinc-200/50 px-2 py-2 gap-1 bg-zinc-50/50">
+          {sections.map((section) => {
+            const isActive = activeMobileTab === section.id;
+            return (
+              <button
+                key={section.id}
+                onClick={() => setActiveMobileTab(section.id)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap transition-all duration-300",
+                  isActive
+                    ? "bg-white text-zinc-900"
+                    : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/50",
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-md text-white shadow-sm transition-transform",
+                    isActive
+                      ? cn("bg-linear-to-br scale-100", section.gradient)
+                      : "bg-zinc-200 text-zinc-400 scale-90",
+                  )}
+                >
+                  {section.icon}
+                </div>
+                <span
+                  className={cn(
+                    "text-xs font-semibold",
+                    isActive ? "" : "font-medium",
+                  )}
+                >
+                  {section.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active section content area with smooth sliding transition */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={activeMobileTab}
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -20, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="absolute inset-0 px-5 py-4 h-max"
+            >
+              {sectionContent?.[activeMobileTab] ?? (
+                <p className="text-xs text-zinc-400">Coming soon...</p>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </>
   );
 }

@@ -17,12 +17,18 @@ import {
   ChevronLeft,
   HelpCircle,
   MoreVertical,
+  PanelsRightBottomIcon,
+  FolderClosed,
 } from "lucide-react";
 import { Avatar, Button, Dropdown, Label } from "@heroui/react";
 import { createClient } from "@/lib/supabase/client";
+import { useEditorStore } from "@/stores/editor-store";
+import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: Home },
+  { name: "My Designs", href: "/dashboard/designs", icon: FolderClosed },
+  { name: "Editor", href: "/editor", icon: PanelsRightBottomIcon },
   { name: "Billing & License", href: "/dashboard/billing", icon: CreditCard },
 ];
 
@@ -156,6 +162,12 @@ export default function DashboardLayout({
                 key={item.name}
                 href={item.href}
                 title={isCollapsed ? item.name : undefined}
+                onClick={() => {
+                  if (item.href === "/editor") {
+                    useEditorStore.getState().reset();
+                  }
+                  setIsSidebarOpen(false);
+                }}
                 className={`flex items-center ${isCollapsed ? "justify-center px-0" : "px-3"} py-2.5 rounded-xl text-sm font-medium transition-all group ${
                   isActive
                     ? "bg-linear-to-r from-orange-50 to-rose-50 text-orange-700 shadow-sm shadow-orange-100/50 ring-1 ring-orange-100/50"
@@ -205,11 +217,9 @@ export default function DashboardLayout({
                               user.email?.split("@")[0] ||
                               "User"}
                           </span>
-                          {isPro && (
-                            <span className="shrink-0 rounded-full bg-linear-to-r from-orange-500 to-rose-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white leading-none shadow-sm shadow-orange-500/20">
-                              PRO
-                            </span>
-                          )}
+                          <span className={cn("shrink-0 rounded-full bg-linear-to-r px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white leading-none shadow-sm shadow-orange-500/20", isPro ? "from-orange-500 to-rose-500": " from-gray-700 to-gray-500")}>
+                            {isPro ? "PRO" : "FREE"}
+                          </span>
                         </div>
                         <span className="text-[11px] font-medium text-zinc-500 truncate mt-0.5">
                           {user.email}

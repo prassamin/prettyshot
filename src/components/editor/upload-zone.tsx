@@ -105,6 +105,7 @@ export function UploadZone() {
 
           <Button
             size="sm"
+            onClick={() => fileInputRef.current?.click()}
             className="mt-2 border border-zinc-200 bg-white font-medium text-zinc-700 shadow-sm hover:bg-zinc-50"
           >
             Select Image

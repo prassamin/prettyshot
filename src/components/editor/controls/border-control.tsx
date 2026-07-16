@@ -3,7 +3,6 @@
 import { useEditorStore } from "@/stores/editor-store";
 
 const RADIUS_PRESETS = [0, 8, 16, 24, 48];
-const BORDER_PRESETS = [0, 1, 2, 4, 8];
 const COLORS = [
   "#ffffff",
   "#000000",
@@ -84,21 +83,6 @@ export function BorderControl() {
             onChange={(e) => setBorderWidth(Number(e.target.value))}
             className="w-full accent-violet-500"
           />
-        </div>
-        <div className="flex gap-2">
-          {BORDER_PRESETS.map((w) => (
-            <button
-              key={w}
-              onClick={() => setBorderWidth(w)}
-              className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all ${
-                borderWidth === w
-                  ? "bg-violet-50 text-violet-600 ring-2 ring-violet-400"
-                  : "bg-zinc-50 text-zinc-500 hover:bg-zinc-100"
-              }`}
-            >
-              {w}
-            </button>
-          ))}
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import {
   GRADIENT_PRESETS,
   MESH_GRADIENT_PRESETS,
@@ -8,6 +9,8 @@ import {
 /* ─── types ─── */
 
 export interface EditorState {
+  // DB identity
+  designId: string | null;
   // Image
   image: string | null;
   imageName: string;
@@ -42,6 +45,7 @@ export interface EditorState {
   exportFormat: "png" | "jpg" | "webp";
   exportScale: 1 | 2 | 3 | 4;
   // Actions
+  setDesignId: (id: string | null) => void;
   setImage: (dataUrl: string, name: string) => void;
   clearImage: () => void;
   setBgType: (type: EditorState["bgType"]) => void;
@@ -76,6 +80,7 @@ export interface EditorState {
 /* ─── defaults ─── */
 
 const initialState = {
+  designId: null,
   image: null,
   imageName: "",
   bgType: "gradient" as const,
@@ -108,43 +113,57 @@ const initialState = {
 
 /* ─── store ─── */
 
-export const useEditorStore = create<EditorState>((set) => ({
-  ...initialState,
+export const useEditorStore = create<EditorState>()(
+  persist(
+    (set) => ({
+      ...initialState,
 
-  setImage: (dataUrl, name) => set({ image: dataUrl, imageName: name }),
-  clearImage: () => set({ image: null, imageName: "" }),
+      setDesignId: (designId) => set({ designId }),
+      setImage: (dataUrl, name) => set({ image: dataUrl, imageName: name }),
+      clearImage: () => set({ image: null, imageName: "" }),
 
-  setBgType: (bgType) => set({ bgType }),
-  setBgGradient: (bgGradient) => set({ bgGradient }),
-  setBgMesh: (bgMesh) => set({ bgMesh }),
-  setBgSolid: (bgSolid) => set({ bgSolid }),
-  setBgImage: (bgImage) => set({ bgImage }),
+      setBgType: (bgType) => set({ bgType }),
+      setBgGradient: (bgGradient) => set({ bgGradient }),
+      setBgMesh: (bgMesh) => set({ bgMesh }),
+      setBgSolid: (bgSolid) => set({ bgSolid }),
+      setBgImage: (bgImage) => set({ bgImage }),
 
-  setPadding: (padding) => set({ padding }),
-  setBorderRadius: (borderRadius) => set({ borderRadius }),
-  setBorderWidth: (borderWidth) => set({ borderWidth }),
-  setBorderColor: (borderColor) => set({ borderColor }),
-  setDeviceFrame: (deviceFrame) => set({ deviceFrame }),
-  setShadowPreset: (shadowPreset) => set({ shadowPreset }),
-  setShadowColor: (shadowColor) => set({ shadowColor }),
-  setAspectRatio: (aspectRatio) => set({ aspectRatio }),
-  setIsCustomAspectRatio: (isCustomAspectRatio) => set({ isCustomAspectRatio }),
-  setCustomAspectRatioWidth: (customAspectRatioWidth) =>
-    set({ customAspectRatioWidth }),
-  setCustomAspectRatioHeight: (customAspectRatioHeight) =>
-    set({ customAspectRatioHeight }),
-  setNoiseOpacity: (noiseOpacity) => set({ noiseOpacity }),
-  setRotateX: (rotateX) => set({ rotateX }),
-  setRotateY: (rotateY) => set({ rotateY }),
-  setRotateZ: (rotateZ) => set({ rotateZ }),
+      setPadding: (padding) => set({ padding }),
+      setBorderRadius: (borderRadius) => set({ borderRadius }),
+      setBorderWidth: (borderWidth) => set({ borderWidth }),
+      setBorderColor: (borderColor) => set({ borderColor }),
+      setDeviceFrame: (deviceFrame) => set({ deviceFrame }),
+      setShadowPreset: (shadowPreset) => set({ shadowPreset }),
+      setShadowColor: (shadowColor) => set({ shadowColor }),
+      setAspectRatio: (aspectRatio) => set({ aspectRatio }),
+      setIsCustomAspectRatio: (isCustomAspectRatio) => set({ isCustomAspectRatio }),
+      setCustomAspectRatioWidth: (customAspectRatioWidth) =>
+        set({ customAspectRatioWidth }),
+      setCustomAspectRatioHeight: (customAspectRatioHeight) =>
+        set({ customAspectRatioHeight }),
+      setNoiseOpacity: (noiseOpacity) => set({ noiseOpacity }),
+      setRotateX: (rotateX) => set({ rotateX }),
+      setRotateY: (rotateY) => set({ rotateY }),
+      setRotateZ: (rotateZ) => set({ rotateZ }),
 
-  setShowWatermark: (showWatermark) => set({ showWatermark }),
-  setWatermarkText: (watermarkText) => set({ watermarkText }),
-  setWatermarkPosition: (watermarkPosition) => set({ watermarkPosition }),
-  setWatermarkSize: (watermarkSize) => set({ watermarkSize }),
+      setShowWatermark: (showWatermark) => set({ showWatermark }),
+      setWatermarkText: (watermarkText) => set({ watermarkText }),
+      setWatermarkPosition: (watermarkPosition) => set({ watermarkPosition }),
+      setWatermarkSize: (watermarkSize) => set({ watermarkSize }),
 
-  setExportFormat: (exportFormat) => set({ exportFormat }),
-  setExportScale: (exportScale) => set({ exportScale }),
+      setExportFormat: (exportFormat) => set({ exportFormat }),
+      setExportScale: (exportScale) => set({ exportScale }),
 
-  reset: () => set(initialState),
-}));
+      reset: () => set(initialState),
+    }),
+    {
+      name: "prettyshot-editor-storage",
+      partialize: (state) => {
+        // We only persist config. Raw images should not be massive in localStorage, 
+        // but if they are urls, it's fine. We keep them because otherwise refresh loses image.
+        // We do want to persist everything so a refresh restores exactly where they were.
+        return state;
+      },
+    }
+  )
+);

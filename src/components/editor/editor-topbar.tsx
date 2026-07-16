@@ -28,6 +28,7 @@ export function EditorTopbar() {
     setExportFormat,
     setExportScale,
   } = useEditorStore();
+  const { user } = useAppStore();
 
   const [open, setOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -65,7 +66,6 @@ export function EditorTopbar() {
     setOutputInfo({ width: w, height: h });
   }, [open, exportFormat, exportScale]);
 
-  const { user } = useAppStore();
   const isPro = user?.is_pro === true;
 
   const handleProAction = (action: () => void) => {
@@ -165,7 +165,7 @@ export function EditorTopbar() {
       setImage(result, file.name);
     };
     reader.readAsDataURL(file);
-    
+
     // Reset input so the same file can be selected again if needed
     e.target.value = "";
   };
@@ -179,7 +179,7 @@ export function EditorTopbar() {
     >
       {/* Left — Back to home */}
       <Link
-        href="/"
+        href={user?.role === "authenticated" ? "/dashboard" : "/"}
         className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-zinc-100/80"
       >
         <ArrowLeft className="size-4 text-zinc-400 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:text-zinc-700" />
@@ -202,12 +202,12 @@ export function EditorTopbar() {
           transition={{ delay: 0.2 }}
           className="flex items-center gap-2"
         >
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileChange}
           />
           <Button
             variant="ghost"
@@ -260,7 +260,8 @@ export function EditorTopbar() {
                           <button
                             key={fmt}
                             onClick={() => {
-                              if (isPremiumFormat && !isPro) handleProAction(() => {});
+                              if (isPremiumFormat && !isPro)
+                                handleProAction(() => {});
                               else setExportFormat(fmt);
                             }}
                             className={`relative rounded-lg py-1.5 text-xs font-bold uppercase transition-all ${
@@ -288,7 +289,8 @@ export function EditorTopbar() {
                           <button
                             key={s}
                             onClick={() => {
-                              if (isPremiumScale && !isPro) handleProAction(() => {});
+                              if (isPremiumScale && !isPro)
+                                handleProAction(() => {});
                               else setExportScale(s);
                             }}
                             className={`relative rounded-lg py-1.5 text-xs font-bold transition-all ${
@@ -306,12 +308,19 @@ export function EditorTopbar() {
 
                   {!isPro && (
                     <div className="mb-4 rounded-xl border border-rose-200/50 bg-linear-to-br from-orange-50 to-rose-50 p-3">
-                      <h4 className="text-xs font-bold text-rose-900 text-center">Export Pro</h4>
+                      <h4 className="text-xs font-bold text-rose-900 text-center">
+                        Export Pro
+                      </h4>
                       <p className="mt-1 text-[10px] font-medium text-rose-700/80 leading-relaxed text-center">
                         Unlock WEBP and high-res (2x-4K) exports.
                       </p>
                       <Button
-                        onPress={() => router.push("/login", { auth: true, next: "/checkout" })}
+                        onPress={() =>
+                          router.push("/login", {
+                            auth: true,
+                            next: "/checkout",
+                          })
+                        }
                         className="mt-2 w-full bg-linear-to-r from-orange-500 to-rose-500 font-bold text-white h-7 text-[10px]"
                       >
                         Upgrade
