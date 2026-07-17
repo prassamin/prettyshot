@@ -16,8 +16,11 @@ export async function proxy(request: NextRequest) {
 
   const supabaseResponse = await updateSession(request);
 
-  // If updateSession returned a redirect (e.g. for ?code= oauth exchange), return it immediately!
-  if (supabaseResponse.status >= 300 && supabaseResponse.status < 400) {
+  // If updateSession returned a redirect or rewrite, return it immediately!
+  if (
+    (supabaseResponse.status >= 300 && supabaseResponse.status < 400) ||
+    supabaseResponse.headers.has("x-middleware-rewrite")
+  ) {
     return supabaseResponse;
   }
 
@@ -43,6 +46,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * Feel free to modify this pattern to include more paths.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|webmanifest|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -9,7 +9,7 @@ export default async function BillingPage() {
 
 export async function generateMetadata() {
   return metatag({
-    title: "Billing & License",
+    title: "Billing & License | Dashboard",
     robots: "noindex, nofollow",
   });
 }

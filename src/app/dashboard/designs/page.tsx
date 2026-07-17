@@ -31,7 +31,7 @@ export default async function AllDesignsPage() {
 
 export async function generateMetadata() {
   return metatag({
-    title: "Designs",
+    title: "Designs | Dashboard",
     robots: "noindex, nofollow",
   });
 }

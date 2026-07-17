@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { createRouteMatcher } from "../route-matcher";
 import { getOrigin } from "../url";
+import { ADMIN_EMAILS } from "@/config";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -57,7 +58,12 @@ export async function updateSession(request: NextRequest) {
   // of sync and terminate the user's session prematurely!
 
   // Protected routes: /dashboard and everything under it
-  const isProtectedRoute = createRouteMatcher(["/dashboard", "/dashboard/.*"]);
+  const isProtectedRoute = createRouteMatcher([
+    "/dashboard",
+    "/dashboard/*",
+    "!/dashboard/admin",
+    "!/dashboard/admin/*",
+  ]);
 
   if (!data?.claims.email && isProtectedRoute(request)) {
     const url = new URL(await getOrigin());
@@ -85,6 +91,22 @@ export async function updateSession(request: NextRequest) {
     }
     return NextResponse.redirect(url);
   }
+
+  const isAdminRoute = createRouteMatcher([
+    "/dashboard/admin",
+    "/dashboard/admin/.*",
+  ]);
+
+  if (
+    data?.claims.email &&
+    isAdminRoute(request) &&
+    !ADMIN_EMAILS.includes(data.claims.email)
+  ) {
+    const url = new URL(await getOrigin());
+    url.pathname = "/not-found";
+    return NextResponse.rewrite(url);
+  }
+
 
   return supabaseResponse;
 }

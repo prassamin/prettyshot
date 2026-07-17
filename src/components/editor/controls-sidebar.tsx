@@ -102,7 +102,7 @@ export function ControlsSidebar({ sectionContent }: ControlsSidebarProps) {
 
         {/* Primary Sidebar (Slim Icons on the far right) */}
         <LayoutGroup id={`primary-sidebar-desktop-${uid}`}>
-          <div className="w-[84px] shrink-0 bg-zinc-50 flex flex-col items-center py-2 overflow-y-auto hide-scrollbar relative">
+          <div className="w-21 shrink-0 bg-zinc-50 flex flex-col items-center py-2 overflow-y-auto hide-scrollbar relative">
             {sections.map((section) => {
               const isActive = activeTab === section.id;
               return (

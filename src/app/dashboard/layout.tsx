@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "@/hooks/use-router";
 import { useEffect, useState } from "react";
 import { Loader2, Menu } from "lucide-react";
-import { Button } from "@heroui/react";
 import { Sidebar, navigation } from "./sidebar";
+import { AdminSidebar } from "./admin-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
+import { Button } from "@heroui/react";
 
 export default function DashboardLayout({
   children,
@@ -21,10 +22,21 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const isAdminRoute = pathname.startsWith("/dashboard/admin");
+
   // Close sidebar when route changes on mobile
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [pathname]);
+
+  // Auto-collapse sidebar when entering admin routes, auto-expand when leaving
+  useEffect(() => {
+    if (isAdminRoute) {
+      setIsCollapsed(true);
+    } else {
+      setIsCollapsed(false);
+    }
+  }, [isAdminRoute]);
 
   useEffect(() => {
     if (user === undefined) return;
@@ -63,11 +75,22 @@ export default function DashboardLayout({
         setIsSidebarOpen={setIsSidebarOpen}
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
+        isAdminRoute={isAdminRoute}
       />
+
+      <AnimatePresence>
+        {isAdminRoute && <AdminSidebar />}
+      </AnimatePresence>
 
       {/* Main Content */}
       <main
-        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${isCollapsed ? "md:pl-20" : "md:pl-64"}`}
+        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${
+          isCollapsed
+            ? isAdminRoute
+              ? "md:pl-76" // 80px (main) + 224px (admin)
+              : "md:pl-20"
+            : "md:pl-64"
+        }`}
       >
         {/* Mobile Header (Hidden on Desktop) */}
         <header className="md:hidden sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur-xl">

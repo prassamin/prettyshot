@@ -1,11 +1,37 @@
 import { NextRequest } from "next/server";
 
 export function createRouteMatcher(patterns: string[]) {
-  const regexPatterns = patterns.map(
-    (pattern) => new RegExp(`^${pattern.replace(/\*/g, ".*")}$`),
+  // Separate regular paths from exclusion paths (prefixed with !)
+  const includePatterns: string[] = [];
+  const excludePatterns: string[] = [];
+
+  patterns.forEach((pattern) => {
+    if (pattern.startsWith("!")) {
+      excludePatterns.push(pattern.slice(1)); // Remove the '!'
+    } else {
+      includePatterns.push(pattern);
+    }
+  });
+
+  // Convert standard patterns to regex (handling wildcards)
+  const includeRegexes = includePatterns.map(
+    (p) => new RegExp(`^${p.replace(/\*/g, ".*")}$`),
   );
+
+  // Convert exclusion patterns to regex (handling wildcards)
+  const excludeRegexes = excludePatterns.map(
+    (p) => new RegExp(`^${p.replace(/\*/g, ".*")}$`),
+  );
+
   return (request: NextRequest) => {
     const url = new URL(request.url);
-    return regexPatterns.some((regex) => regex.test(url.pathname));
+    const pathname = url.pathname;
+
+    // First check: If it matches any exclusion rule, it is NOT protected
+    const isExcluded = excludeRegexes.some((regex) => regex.test(pathname));
+    if (isExcluded) return false;
+
+    // Second check: If it matches standard inclusion rules, it IS protected
+    return includeRegexes.some((regex) => regex.test(pathname));
   };
 }

@@ -36,6 +36,7 @@ interface SidebarProps {
   setIsSidebarOpen: (v: boolean) => void;
   isCollapsed: boolean;
   setIsCollapsed: (v: boolean) => void;
+  isAdminRoute?: boolean;
 }
 
 export function Sidebar({
@@ -43,6 +44,7 @@ export function Sidebar({
   setIsSidebarOpen,
   isCollapsed,
   setIsCollapsed,
+  isAdminRoute,
 }: SidebarProps) {
   const { user, setUser } = useAppStore();
   const router = useRouter();
@@ -62,7 +64,7 @@ export function Sidebar({
   const dynamicNavigation = [
     ...navigation,
     ...(user.email && ADMIN_EMAILS.includes(user.email)
-      ? [{ name: "Admin Portal", href: "/dashboard/admin", icon: Settings }]
+      ? [{ name: "Admin Portal", href: "/dashboard/admin/backgrounds", icon: Settings }]
       : []),
   ];
 
@@ -94,16 +96,18 @@ export function Sidebar({
           )}
         </Link>
 
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-5 size-6 items-center justify-center rounded-full border border-orange-100 bg-white shadow-sm shadow-orange-100/50 text-orange-400 hover:text-orange-600 hover:border-orange-200 z-50 hidden md:flex transition-colors"
-        >
-          {isCollapsed ? (
-            <ChevronRight className="size-3" />
-          ) : (
-            <ChevronLeft className="size-3" />
-          )}
-        </button>
+        {!isAdminRoute && (
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-5 size-6 items-center justify-center rounded-full border border-orange-100 bg-white shadow-sm shadow-orange-100/50 text-orange-400 hover:text-orange-600 hover:border-orange-200 z-50 hidden md:flex transition-colors"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="size-3" />
+            ) : (
+              <ChevronLeft className="size-3" />
+            )}
+          </button>
+        )}
 
         {/* Mobile Close Button */}
         <Button

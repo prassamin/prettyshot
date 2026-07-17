@@ -3,7 +3,7 @@
 import { useEditorStore } from "@/stores/editor-store";
 import { activateFreeTrial } from "@/app/actions/activate-trial";
 import { useAppStore } from "@/stores/app-store";
-import { Button, Spinner } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { useRouter } from "@/hooks/use-router";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,7 @@ import {
   ImageIcon,
   ChevronRight,
   Crown,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Twitter } from "@/components/icons/twitter";
@@ -169,7 +170,7 @@ export default function DashboardOverview() {
             size="lg"
             className="relative z-10 bg-white text-rose-600 font-bold px-8 shadow-xl hover:scale-105 transition-transform w-full sm:w-auto"
           >
-            {activatingTrial && <Spinner className="mr-2" />}
+            {activatingTrial && <Loader2 className="mr-2 animate-spin size-4" />}
             Activate Trial
           </Button>
 
