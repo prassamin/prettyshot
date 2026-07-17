@@ -5,15 +5,16 @@ import { useAppStore } from "@/stores/app-store";
 import { useRouter } from "@/hooks/use-router";
 import { Laptop, Monitor, AppWindow, Square } from "lucide-react";
 import { Button } from "@heroui/react";
+import { isPro } from "@/lib/utils";
 
 export function FrameControl() {
   const { deviceFrame, setDeviceFrame } = useEditorStore();
   const { user } = useAppStore();
-  const isPro = user?.is_pro === true;
+  const pro = isPro(user)
   const router = useRouter();
 
   const handleSetFrame = (frame: "none" | "macos" | "windows" | "glass") => {
-    if (!isPro && frame !== "none") {
+    if (!pro.isActive && frame !== "none") {
       router.push("/login", { auth: true, next: "/checkout" });
       return;
     }

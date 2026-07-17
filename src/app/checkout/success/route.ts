@@ -4,14 +4,11 @@ import { getCurrentUrl, getOrigin } from "@/lib/url";
 import { polar } from "@/lib/polar";
 
 export async function GET() {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const currentUrl = await getCurrentUrl();
   const url = new URL(currentUrl);
-  // Polar might append it as checkout_id or checkoutId depending on the exact SDK version
-  const checkoutId =
-    url.searchParams.get("checkout_id") ||
-    url.searchParams.get("checkoutId") ||
-    url.searchParams.get("id");
+
+  const checkoutId = url.searchParams.get("checkout_id");
   const next = url.searchParams.get("next");
   const origin = await getOrigin();
   const fallbackRedirect = NextResponse.redirect(`${origin}/editor`);
@@ -27,7 +24,7 @@ export async function GET() {
 
     // Verify that the checkout actually succeeded
     if (checkout.status === "succeeded" || checkout.status === "confirmed") {
-      const userId = checkout.metadata?.supabase_user_id;
+      const userId = checkout.externalCustomerId;
 
       if (userId) {
         // Update the Supabase profile securely
@@ -38,13 +35,9 @@ export async function GET() {
 
         if (error) {
           console.error("Failed to update user profile to Pro:", error);
-        } else {
-          console.log(
-            `Successfully upgraded user ${userId} to PRO!`,
-          );
         }
       } else {
-        console.error("No Supabase User ID found in checkout metadata!");
+        console.error("No Supabase User ID found in checkout!");
       }
     } else {
       console.log(
@@ -58,7 +51,7 @@ export async function GET() {
       ? `${origin}${next}`
       : next?.startsWith("https://") || next?.startsWith("https://")
         ? next
-        : "${origin}/dashboard";
+        : `${origin}/dashboard`;
 
     return NextResponse.redirect(redirectUrl);
   } catch (error) {

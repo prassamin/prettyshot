@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Link as LinkIcon, Monitor, LayoutTemplate } from "lucide-react";
+import { Link as LinkIcon, Monitor, LayoutTemplate } from "lucide-react";
 import { Button } from "@heroui/react";
 import { Instagram } from "@/components/icons/instagram";
 import { Twitter } from "@/components/icons/twitter";
@@ -13,6 +13,7 @@ import { useEditorStore } from "@/stores/editor-store";
 import { useAppStore } from "@/stores/app-store";
 import { useRouter } from "@/hooks/use-router";
 import { PRO_ASPECT_RATIOS } from "@/lib/presets";
+import { isPro } from "@/lib/utils";
 
 // Custom lock icon overlay
 function LockOverlay({ onClick }: { onClick: () => void }) {
@@ -41,7 +42,7 @@ export function AspectRatioDropdown() {
   } = useEditorStore();
 
   const { user } = useAppStore();
-  const isPro = user?.is_pro === true;
+  const pro = isPro(user)
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -59,7 +60,7 @@ export function AspectRatioDropdown() {
   }, [open]);
 
   const handleProAction = (action: () => void) => {
-    if (!isPro) {
+    if (!pro.isActive) {
       router.push("/login", { auth: true, next: "/checkout" });
       setOpen(false);
       return;
@@ -95,11 +96,10 @@ export function AspectRatioDropdown() {
       <Button
          size="sm"
         onPress={() => setOpen(!open)}
-        className="flex items-center gap-1.5 bg-zinc-100 text-xs font-semibold text-zinc-700 hover:bg-zinc-200"
+        className="flex items-center bg-zinc-100 text-xs font-semibold text-zinc-700 hover:bg-zinc-200 mr-5"
       >
         <LayoutTemplate className="size-3.5" />
-        <span className="min-w-10 text-left">{currentLabel}</span>
-        <ChevronDown className={`size-3.5 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} />
+        <span className="text-left">{currentLabel}</span>
       </Button>
 
       <AnimatePresence>
@@ -158,7 +158,7 @@ export function AspectRatioDropdown() {
                   Set
                 </Button>
                 
-                {!isPro && <LockOverlay onClick={() => handleProAction(() => {})} />}
+                {!pro.isActive && <LockOverlay onClick={() => handleProAction(() => {})} />}
               </div>
 
               {/* Categories */}
@@ -238,7 +238,7 @@ export function AspectRatioDropdown() {
                       </button>
                     ))}
                     
-                    {!isPro && category !== "Standard" && <LockOverlay onClick={() => handleProAction(() => {})} />}
+                    {!pro.isActive && category !== "Standard" && <LockOverlay onClick={() => handleProAction(() => {})} />}
                   </div>
                 </div>
               ))}

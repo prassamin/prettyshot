@@ -15,7 +15,7 @@ export function Providers({
 }) {
   const [queryClient] = useState(() => new QueryClient());
   const storeRef = useRef<ReturnType<typeof createAppStore>>(undefined);
-  
+
   if (!storeRef.current) {
     storeRef.current = createAppStore({ user });
   }
@@ -23,6 +23,7 @@ export function Providers({
   useEffect(() => {
     if (storeRef.current) {
       storeRef.current.getState().setOrigin(window.location.origin);
+      storeRef.current.getState().setUrl(new URL(window.location.href));
     }
   }, []);
 

@@ -4,17 +4,19 @@ import { useAppStore } from "@/stores/app-store";
 import { uploadImageDeduplicated } from "@/lib/image-utils";
 import { createClient } from "@supabase/supabase-js"; // Use raw client to inject keepalive
 import { createClient as createLocalClient } from "@/lib/supabase/client";
+import { isPro } from "@/lib/utils";
 
 export function useAutoSave() {
   const { user } = useAppStore();
+  const pro = isPro(user)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const accessTokenRef = useRef<string | undefined>();
+  const accessTokenRef = useRef<string | undefined>(null);
   
   // Track the stringified version of what we last successfully saved
   const lastSavedStateRef = useRef<string>("");
 
   useEffect(() => {
-    if (!user || user.is_pro !== true) return;
+    if (!user || pro.isActive !== true) return;
 
     // Standard client for normal debounced saves
     const standardSupabase = createLocalClient();
@@ -49,8 +51,9 @@ export function useAutoSave() {
       let finalImage = state.image;
       let finalBgImage = state.bgImage;
       let designId = state.designId;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       
-      if (!designId) {
+      if (!designId || !uuidRegex.test(designId)) {
         designId = crypto.randomUUID();
         state.setDesignId(designId);
       }

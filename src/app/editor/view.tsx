@@ -13,8 +13,9 @@ import { PerspectiveControl } from "@/components/editor/controls/perspective-con
 import { WatermarkControl } from "@/components/editor/controls/watermark-control";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/use-router";
 import { useEditorStore } from "@/stores/editor-store";
+import { nanoid } from 'nanoid'
 
 const sectionContent: Record<string, React.ReactNode> = {
   background: <BackgroundControl />,
@@ -48,7 +49,7 @@ export function EditorView({ initialConfig, serverId }: { initialConfig?: any, s
         store.setDeviceFrame(preAppliedFrame);
       }
       
-      const newId = crypto.randomUUID();
+      const newId = nanoid();
       store.setDesignId(newId);
       router.replace(`/editor?id=${newId}`);
     } else {

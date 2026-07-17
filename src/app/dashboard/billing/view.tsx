@@ -3,15 +3,17 @@
 
 import { useAppStore } from "@/stores/app-store";
 import { Button, Chip } from "@heroui/react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/use-router";
 import { CreditCard, Crown, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { generateReceipt } from "./actions";
 import { type Order } from "@polar-sh/sdk/models/components/order";
+import { isPro } from "@/lib/utils";
 
 export function BillingPageView({ orders }: { orders: Array<Order> }) {
   const { user } = useAppStore();
   const router = useRouter();
+  const pro = isPro(user);
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
@@ -32,7 +34,6 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
   };
 
   if (!user) return null;
-  const isPro = user.is_pro === true;
 
   return (
     <div className="max-w-5xl space-y-10">
@@ -60,7 +61,7 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
 
         <div>
           <div className="rounded-2xl border border-zinc-200/80 bg-white shadow-sm overflow-hidden">
-            {isPro ? (
+            {pro.type === "pro" ? (
               <>
                 <div className="p-6 sm:p-8">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -85,9 +86,52 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
                   <p className="text-sm text-zinc-600 leading-relaxed mb-6 max-w-xl">
                     You have full access to all premium features forever. This
                     includes 4K high-res exports, advanced 3D perspective tilts,
-                    custom watermarks, and WEBP formats. No recurring charges or
+                    custom watermarks, and Cloud Sync. No recurring charges or
                     subscriptions.
                   </p>
+                </div>
+              </>
+            ) : pro.type === "trial" ? (
+              <>
+                <div className="p-6 sm:p-8 bg-linear-to-br from-orange-50/50 to-rose-50/50">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="flex size-12 items-center justify-center rounded-xl bg-orange-100 border border-orange-200">
+                        <Crown className="size-6 text-orange-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-zinc-900">
+                          Pro Trial Active
+                        </h3>
+                        <p className="text-sm text-zinc-500 mt-0.5">
+                          Trial ends on{" "}
+                          {new Date(user.trial_ends_at!).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold tracking-wide text-orange-700 ring-1 ring-inset ring-orange-600/20 uppercase self-start sm:self-auto">
+                      Trialing
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-zinc-600 leading-relaxed mb-6 max-w-xl">
+                    You currently have full temporary access to all premium
+                    features. Secure your lifetime license now so you don&apos;t
+                    lose access to Cloud Sync, 4K exports, and custom watermarks
+                    when the trial expires.
+                  </p>
+                </div>
+                <div className="bg-orange-50/80 border-t border-orange-100/50 px-6 py-4 sm:px-8 flex items-center justify-between">
+                  <div className="text-sm text-orange-800">
+                    Lifetime access for{" "}
+                    <span className="font-semibold text-orange-950">$29</span>
+                  </div>
+                  <Button
+                    onPress={() => router.push("/checkout", { external: true })}
+                    className="bg-linear-to-r from-orange-500 to-rose-500 text-white font-medium shadow-md shadow-orange-500/20 rounded-xl px-6"
+                  >
+                    Upgrade to Lifetime Pro
+                  </Button>
                 </div>
               </>
             ) : (
@@ -112,7 +156,7 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
                   <p className="text-sm text-zinc-600 leading-relaxed mb-6 max-w-xl">
                     You are currently using the free version. Upgrade to a
                     lifetime license to unlock 4K exports, advanced 3D
-                    perspective tilts, WEBP formats, and custom watermarks.
+                    perspective tilts, Cloud Sync, and custom watermarks.
                   </p>
                 </div>
                 <div className="bg-zinc-50/50 border-t border-zinc-100 px-6 py-4 sm:px-8 flex items-center justify-between">
@@ -121,7 +165,7 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
                     <span className="font-semibold text-zinc-900">$29</span>
                   </div>
                   <Button
-                    onPress={() => router.push("/checkout")}
+                    onPress={() => router.push("/checkout", { external: true })}
                     className="bg-zinc-900 text-white font-medium hover:bg-zinc-800 shadow-sm rounded-xl px-6"
                   >
                     Upgrade to Pro
@@ -134,7 +178,7 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
       </div>
 
       {/* Section: Invoice History (Pro Only) */}
-      {isPro && (
+      {pro.type === "pro" && (
         <div className="flex flex-col gap-5">
           <div>
             <h2 className="text-base font-semibold text-zinc-900">

@@ -11,6 +11,7 @@ import {
   MESH_GRADIENT_PRESETS,
   SOLID_COLOR_PRESETS,
 } from "@/lib/presets";
+import { isPro } from "@/lib/utils";
 
 /* ─── tab button ─── */
 
@@ -61,7 +62,7 @@ export function BackgroundControl() {
   } = useEditorStore();
 
   const { user } = useAppStore();
-  const isPro = user?.is_pro === true;
+  const pro = isPro(user);
   const router = useRouter();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -193,7 +194,7 @@ export function BackgroundControl() {
       {/* Image upload */}
       {bgType === "image" && (
         <div className="space-y-2">
-          {!isPro ? (
+          {!pro.isActive ? (
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50/50 p-6 text-center">
               <div className="flex size-10 items-center justify-center rounded-full bg-violet-100 text-violet-600 shadow-sm">
                 <Lock className="size-5" />

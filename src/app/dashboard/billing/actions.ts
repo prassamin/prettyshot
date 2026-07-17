@@ -22,7 +22,7 @@ const getCachedPolarOrders = unstable_cache(
   {
     revalidate: 3600, // cache for 1 hour
     tags: ["polar-orders"],
-  }
+  },
 );
 
 export async function getOrders() {
@@ -32,7 +32,7 @@ export async function getOrders() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return [];
+    if (!user || !user.user_metadata.is_pro) return [];
 
     const orders = await getCachedPolarOrders(user.id);
 

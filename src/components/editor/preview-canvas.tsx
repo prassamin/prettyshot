@@ -7,21 +7,25 @@ import { useEditorStore } from "@/stores/editor-store";
 import { useAppStore } from "@/stores/app-store";
 import { SHADOW_PRESETS } from "@/lib/presets";
 import { UploadZone } from "./upload-zone";
+import { isPro } from "@/lib/utils";
 
 function DeviceFrameWrapper({
   frame,
   children,
   style,
   borderRadius,
+  className,
 }: {
   frame: "none" | "macos" | "windows" | "glass";
   children: React.ReactNode;
   style: React.CSSProperties;
   borderRadius: number;
+  className?: string;
 }) {
   if (frame === "macos") {
     return (
       <div
+        className={className}
         style={{
           ...style,
           overflow: "hidden",
@@ -81,6 +85,7 @@ function DeviceFrameWrapper({
   if (frame === "windows") {
     return (
       <div
+        className={className}
         style={{
           ...style,
           overflow: "hidden",
@@ -121,6 +126,7 @@ function DeviceFrameWrapper({
   if (frame === "glass") {
     return (
       <div
+        className={className}
         style={{
           ...style,
           overflow: "hidden",
@@ -147,7 +153,10 @@ function DeviceFrameWrapper({
   }
 
   return (
-    <div style={{ ...style, overflow: "hidden", display: "flex" }}>
+    <div
+      className={className}
+      style={{ ...style, overflow: "hidden", display: "flex" }}
+    >
       {children}
     </div>
   );
@@ -175,7 +184,7 @@ function generateNoiseTexture(size = 150): string {
 export function PreviewCanvas() {
   const captureRef = useRef<HTMLDivElement>(null);
   const { user } = useAppStore();
-  const isPro = user?.is_pro === true;
+  const pro = isPro(user);
 
   const {
     image,
@@ -321,11 +330,11 @@ export function PreviewCanvas() {
           <DeviceFrameWrapper
             frame={deviceFrame}
             borderRadius={borderRadius}
+            className="w-[60vw] lg:w-[25vw]"
             style={{
               position: "relative",
               zIndex: 1,
-              width: "640px",
-              minHeight: aspectRatio ? "0" : "400px",
+              minHeight: aspectRatio ? "0" : "30vh",
               height: aspectRatio ? "100%" : "auto",
               alignSelf: "stretch",
               borderRadius: `${borderRadius}px`,
@@ -352,7 +361,7 @@ export function PreviewCanvas() {
         )}
 
         {/* Watermark — Forced on for Free users, toggleable/customizable for Pro */}
-        {(!isPro || showWatermark) && (
+        {(!pro.isActive || showWatermark) && (
           <div
             className={`prettyshot-watermark-react absolute flex items-center gap-1 rounded-full px-2 py-0.5 ${
               watermarkPosition === "top-left"
@@ -382,7 +391,7 @@ export function PreviewCanvas() {
               className="font-semibold text-white"
               style={{ fontSize: "10px", lineHeight: "16px", opacity: 0.9 }}
             >
-              {!isPro ? "PrettyShot" : watermarkText || "PrettyShot"}
+              {!pro.isActive ? "PrettyShot" : watermarkText || "PrettyShot"}
             </span>
           </div>
         )}

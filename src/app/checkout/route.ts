@@ -23,10 +23,9 @@ export const GET = async () => {
   if (!user) {
     return NextResponse.redirect(`${origin}/login?next=/checkout`);
   }
-  console.log(user);
   // Let Polar's native Next.js handler do the rest using our spoofed request
   const polarHandler = await polar.checkouts.create({
-    successUrl: `${origin}/checkout/success?next=/dashboard`,
+    successUrl: `${origin}/checkout/success?next=/dashboard&checkout_id={CHECKOUT_ID}`,
     returnUrl: `${origin}/`,
     products: [POLAR_PRODUCT_ID],
     customerEmail: user.email,

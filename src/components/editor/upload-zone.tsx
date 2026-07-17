@@ -90,11 +90,11 @@ export function UploadZone() {
         }`}
       >
         <div className="relative z-10 flex flex-col items-center gap-3">
-          <div className="flex size-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-zinc-200/50">
+          <div className="flex size-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-zinc-200/50 not-lg:hidden">
             <ImagePlus className="size-6 text-zinc-500" strokeWidth={1.5} />
           </div>
 
-          <div className="text-center">
+          <div className="text-center not-lg:hidden">
             <h3 className="text-base font-semibold text-zinc-800">
               {dragging ? "Drop to upload" : "Upload Screenshot"}
             </h3>

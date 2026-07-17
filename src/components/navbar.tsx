@@ -23,6 +23,7 @@ import { createClient } from "@/lib/supabase/client";
 import { APP_NAME, APP_GITHUB_URL } from "@/config";
 import { useRouter } from "@bprogress/next";
 import { useAppStore } from "@/stores/app-store";
+import { isPro } from "@/lib/utils";
 
 const navLinks = [
   { label: "How it works", href: "#how-it-works" },
@@ -84,6 +85,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const { user, setUser } = useAppStore();
+  const pro = isPro(user);
   const supabase = createClient();
 
   useEffect(() => {
@@ -178,7 +180,7 @@ export function Navbar() {
                     <Dropdown.Trigger>
                       <Avatar
                         className="transition-transform"
-                        color={user.is_pro ? "warning" : "default"}
+                        color={pro.isActive ? "warning" : "default"}
                         size="sm"
                       >
                         <Avatar.Image src={user.user_metadata?.avatar_url} />
@@ -213,7 +215,7 @@ export function Navbar() {
                               <span className="text-[14px] font-bold text-zinc-900">
                                 {user.user_metadata?.full_name || "My Account"}
                               </span>
-                              <span className="text-[13px] font-medium text-zinc-500 truncate max-w-[140px]">
+                              <span className="text-[13px] font-medium text-zinc-500 truncate max-w-35">
                                 {user.email}
                               </span>
                             </div>
@@ -238,7 +240,7 @@ export function Navbar() {
                         >
                           <div className="flex w-full items-center gap-2.5 px-3 py-2 cursor-pointer">
                             <Home
-                              className="size-[18px] text-zinc-700 shrink-0"
+                              className="size-4.5 text-zinc-700 shrink-0"
                               strokeWidth={1.8}
                             />
                             <span className="text-[14px] font-medium text-zinc-800">
@@ -254,7 +256,7 @@ export function Navbar() {
                         >
                           <div className="flex w-full items-center gap-2.5 px-3 py-2 cursor-pointer">
                             <LayoutTemplate
-                              className="size-[18px] text-zinc-700 shrink-0"
+                              className="size-4.5 text-zinc-700 shrink-0"
                               strokeWidth={1.8}
                             />
                             <span className="text-[14px] font-medium text-zinc-800">
@@ -271,17 +273,22 @@ export function Navbar() {
                           <div className="flex w-full items-center justify-between px-3 py-2 cursor-pointer">
                             <div className="flex items-center gap-2.5">
                               <CreditCard
-                                className="size-[18px] text-zinc-700 shrink-0"
+                                className="size-4.5 text-zinc-700 shrink-0"
                                 strokeWidth={1.8}
                               />
                               <span className="text-[14px] font-medium text-zinc-800">
                                 Subscription
                               </span>
                             </div>
-                            {user.is_pro ? (
+                            {pro.type === "pro" ? (
                               <span className="flex items-center gap-1 rounded bg-green-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-green-700">
                                 <Zap className="size-3 fill-current" />
                                 PRO
+                              </span>
+                            ) : pro.type === "trial" ? (
+                              <span className="flex items-center gap-1 rounded bg-cyan-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-cyan-700">
+                                <Sparkles className="size-3" />
+                                Trial
                               </span>
                             ) : (
                               <span className="flex items-center gap-1 rounded bg-fuchsia-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-fuchsia-700">
@@ -299,7 +306,7 @@ export function Navbar() {
                         >
                           <div className="flex w-full items-center gap-2.5 px-3 py-2 cursor-pointer">
                             <LogOut
-                              className="size-[18px] text-zinc-700 shrink-0"
+                              className="size-4.5 text-zinc-700 shrink-0"
                               strokeWidth={1.8}
                             />
                             <span className="text-[14px] font-medium text-zinc-800">
@@ -315,14 +322,14 @@ export function Navbar() {
                     {/* Outer glow on hover */}
                     <div className="absolute -inset-1.5 rounded-2xl bg-linear-to-r from-orange-400 via-rose-400 to-violet-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-50" />
                     <Button
-                      onPress={() => router.push("/editor")}
+                      onPress={() => router.push("/login")}
                       variant="primary"
                       size="sm"
                       className="relative overflow-hidden bg-zinc-900 font-semibold text-white shadow-lg shadow-zinc-900/20 transition-shadow duration-300 hover:shadow-xl hover:shadow-zinc-900/30"
                     >
                       {/* Shimmer sweep */}
                       <span className="pointer-events-none absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                      <span className="relative z-10">Open Editor</span>
+                      <span className="relative z-10">Log in</span>
                     </Button>
                   </div>
                 )}
@@ -411,11 +418,11 @@ export function Navbar() {
                         fullWidth
                         className="bg-zinc-900 font-semibold text-white"
                         onPress={() => {
-                          router.push("/editor");
+                          router.push(user ? "/editor" : "/login");
                           setMobileOpen(false);
                         }}
                       >
-                        Open Editor
+                        {user ? "Open Editor" : "Log in"}
                       </Button>
                     </motion.div>
                   </div>

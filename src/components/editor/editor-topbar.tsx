@@ -17,6 +17,7 @@ import { useAppStore } from "@/stores/app-store";
 import { captureElement, downloadImage, copyToClipboard } from "@/lib/export";
 import { useRouter } from "@/hooks/use-router";
 import { AspectRatioDropdown } from "./aspect-ratio-dropdown";
+import { isPro } from "@/lib/utils";
 
 export function EditorTopbar() {
   const {
@@ -66,10 +67,10 @@ export function EditorTopbar() {
     setOutputInfo({ width: w, height: h });
   }, [open, exportFormat, exportScale]);
 
-  const isPro = user?.is_pro === true;
+  const pro = isPro(user);
 
   const handleProAction = (action: () => void) => {
-    if (!isPro) {
+    if (!pro.isActive) {
       router.push("/login", { auth: true, next: "/checkout" });
       return;
     }
@@ -86,7 +87,7 @@ export function EditorTopbar() {
       el.querySelectorAll(".prettyshot-watermark-react"),
     ) as HTMLElement[];
 
-    if (!isPro) {
+    if (!pro.isActive) {
       // Hide any existing React watermarks (real or fake) so we don't get duplicates
       originalNodes.forEach((node) => {
         node.style.display = "none";
@@ -133,7 +134,7 @@ export function EditorTopbar() {
       setExporting(false);
       setOpen(false);
     }
-  }, [isPro]);
+  }, [pro.isActive]);
 
   const handleCopy = useCallback(async () => {
     const el = document.getElementById("capture-area");
@@ -153,7 +154,7 @@ export function EditorTopbar() {
     } catch {
       // clipboard may not be available
     }
-  }, [isPro]);
+  }, [pro.isActive]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -260,7 +261,7 @@ export function EditorTopbar() {
                           <button
                             key={fmt}
                             onClick={() => {
-                              if (isPremiumFormat && !isPro)
+                              if (isPremiumFormat && !pro.isActive)
                                 handleProAction(() => {});
                               else setExportFormat(fmt);
                             }}
@@ -289,7 +290,7 @@ export function EditorTopbar() {
                           <button
                             key={s}
                             onClick={() => {
-                              if (isPremiumScale && !isPro)
+                              if (isPremiumScale && !pro.isActive)
                                 handleProAction(() => {});
                               else setExportScale(s);
                             }}
@@ -306,7 +307,7 @@ export function EditorTopbar() {
                     </div>
                   </div>
 
-                  {!isPro && (
+                  {!pro.isActive && (
                     <div className="mb-4 rounded-xl border border-rose-200/50 bg-linear-to-br from-orange-50 to-rose-50 p-3">
                       <h4 className="text-xs font-bold text-rose-900 text-center">
                         Export Pro

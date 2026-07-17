@@ -6,13 +6,16 @@ import { User as SupaUser } from "@supabase/supabase-js";
 export interface User extends SupaUser {
   is_pro: boolean;
   polar_order_id?: string;
+  trial_ends_at?: string;
 }
 
 export interface AppState {
   origin: string;
   user: User | null;
+  url: URL;
   setOrigin: (origin: string) => void;
   setUser: (user?: User | null) => void;
+  setUrl: (url: URL) => void;
 }
 
 export const AppStoreContext = createContext<ReturnType<
@@ -23,8 +26,10 @@ export const createAppStore = (initProps?: Partial<AppState>) => {
   return createStore<AppState>()((set) => ({
     origin: initProps?.origin || "",
     user: initProps?.user || null,
+    url: initProps?.url as any,
     setOrigin: (origin) => set({ origin }),
     setUser: (user) => set({ user: user || null }),
+    setUrl: (url) => set({ url }),
   }));
 };
 

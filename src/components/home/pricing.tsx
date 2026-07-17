@@ -5,11 +5,12 @@ import { Check, Sparkles, Zap } from "lucide-react";
 import { Button } from "@heroui/react";
 import { useRouter } from "@/hooks/use-router";
 import { useAppStore } from "@/stores/app-store";
+import { isPro } from "@/lib/utils";
 
 export function Pricing() {
   const router = useRouter();
   const { user } = useAppStore();
-  const isPro = user?.is_pro;
+  const pro = isPro(user);
 
   return (
     <section
@@ -103,7 +104,9 @@ export function Pricing() {
               className="w-full border-zinc-200 bg-white font-semibold text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 hover:text-zinc-900"
               onPress={() => router.push("/editor")}
             >
-              {isPro ? "Open Editor" : "Start for free"}
+              {pro.isActive && pro.type === "pro"
+                ? "Open Editor"
+                : "Start for free"}
             </Button>
           </motion.div>
 
@@ -175,13 +178,18 @@ export function Pricing() {
             <Button
               size="lg"
               className="relative w-full overflow-hidden bg-zinc-900 font-bold text-white shadow-xl shadow-zinc-900/20 transition-transform hover:-translate-y-0.5 hover:shadow-2xl disabled:opacity-80 disabled:hover:translate-y-0 disabled:hover:shadow-xl disabled:cursor-not-allowed"
-              isDisabled={isPro}
+              isDisabled={pro.isActive && pro.type === "pro"}
               onPress={() =>
-                !isPro && router.push("/login", { auth: true, next: "/checkout" })
+                (!pro.isActive || pro.type !== "pro") &&
+                router.push("/login", { auth: true, next: "/checkout" })
               }
             >
-              {!isPro && <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full transition-transform duration-1000 hover:translate-x-full" />}
-              {isPro ? "Pro Unlocked" : "Get Pro Access"}
+              {(!pro.isActive || pro.type !== "pro") && (
+                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full transition-transform duration-1000 hover:translate-x-full" />
+              )}
+              {pro.isActive && pro.type === "pro"
+                ? "Pro Unlocked"
+                : "Get Pro Access"}
             </Button>
           </motion.div>
         </div>

@@ -19,6 +19,7 @@ const eslintConfig = defineConfig([
       "react-hooks/refs": "off",
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/exhaustive-deps": "off",
+      "@next/next/no-img-element": "off",
     },
   }
 ]);

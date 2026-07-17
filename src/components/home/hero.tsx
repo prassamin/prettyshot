@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@heroui/react";
 import { useRouter } from "@bprogress/next";
+import { useAppStore } from "@/stores/app-store";
 
 /* ─── animation helpers ─── */
 
@@ -139,6 +140,7 @@ function MockScreenshot() {
   const springY = useSpring(y, { stiffness: 150, damping: 20 });
   const rotateX = useTransform(springY, [-0.5, 0.5], [4, -4]);
   const rotateY = useTransform(springX, [-0.5, 0.5], [-4, 4]);
+  const { url } = useAppStore();
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -198,7 +200,7 @@ function MockScreenshot() {
               <div className="ml-4 flex-1">
                 <div className="mx-auto flex h-6 max-w-50 items-center justify-center rounded-lg bg-zinc-800 text-[11px] font-medium text-zinc-400">
                   <span className="mr-1 text-emerald-400">●</span>
-                  {window.location.host}
+                  {url?.host}
                 </div>
               </div>
               <div className="w-15" />
@@ -440,7 +442,6 @@ export function Hero() {
                 className="relative bg-zinc-900 px-8 font-bold text-white shadow-2xl shadow-zinc-900/30 transition-shadow duration-300 hover:shadow-3xl"
                 onPress={() => router.push("/editor")}
               >
-                <Sparkles className="size-4" />
                 Start beautifying
                 <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </Button>

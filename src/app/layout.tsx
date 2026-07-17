@@ -85,14 +85,11 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_pro, polar_order_id")
-      .eq("id", user.id)
-      .single();
-
-    (user as any).is_pro = profile?.is_pro;
-    (user as any).polar_order_id = profile?.polar_order_id;
+    const isTrialActive = user.user_metadata?.trial_ends_at ? new Date(user.user_metadata.trial_ends_at) > new Date() : false;
+    
+    (user as any).is_pro = user.user_metadata?.is_pro || isTrialActive;
+    (user as any).polar_order_id = user.user_metadata?.polar_order_id;
+    (user as any).trial_ends_at = user.user_metadata?.trial_ends_at;
   }
   return (
     <html

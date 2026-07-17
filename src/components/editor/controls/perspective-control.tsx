@@ -6,6 +6,7 @@ import { useEditorStore } from "@/stores/editor-store";
 import { useAppStore } from "@/stores/app-store";
 import { useRouter } from "@/hooks/use-router";
 import { Button } from "@heroui/react";
+import { cn, isPro } from "@/lib/utils";
 
 interface TiltPreset {
   name: string;
@@ -68,24 +69,18 @@ function Slider({
 }
 
 export function PerspectiveControl() {
-  const {
-    rotateX,
-    rotateY,
-    rotateZ,
-    setRotateX,
-    setRotateY,
-    setRotateZ,
-  } = useEditorStore();
+  const { rotateX, rotateY, rotateZ, setRotateX, setRotateY, setRotateZ } =
+    useEditorStore();
 
   const { user } = useAppStore();
-  const isPro = user?.is_pro === true;
+  const pro = isPro(user);
   const router = useRouter();
 
   const isActive = (p: TiltPreset) =>
     p.x === rotateX && p.y === rotateY && p.z === rotateZ;
 
   const handleReset = () => {
-    if (!isPro) return;
+    if (!pro.isActive) return;
     setRotateX(0);
     setRotateY(0);
     setRotateZ(0);
@@ -93,14 +88,19 @@ export function PerspectiveControl() {
 
   return (
     <div className="relative">
-      <div className={`space-y-3 ${!isPro ? "pointer-events-none opacity-40 blur-[2px]" : ""}`}>
+      <div
+        className={cn(
+          `space-y-3`,
+          !pro.isActive ? "pointer-events-none opacity-40 blur-[2px]" : "",
+        )}
+      >
         {/* Presets */}
         <div className="grid grid-cols-3 gap-2">
           {TILT_PRESETS.map((preset) => (
             <button
               key={preset.name}
               onClick={() => {
-                if (!isPro) return;
+                if (!pro.isActive) return;
                 setRotateX(preset.x);
                 setRotateY(preset.y);
                 setRotateZ(preset.z);
@@ -148,21 +148,45 @@ export function PerspectiveControl() {
               </button>
             )}
           </div>
-          <Slider label="Tilt X" value={rotateX} onChange={setRotateX} min={-60} max={60} isPro={isPro} />
-          <Slider label="Tilt Y" value={rotateY} onChange={setRotateY} min={-60} max={60} isPro={isPro} />
-          <Slider label="Rotate" value={rotateZ} onChange={setRotateZ} min={-45} max={45} isPro={isPro} />
+          <Slider
+            label="Tilt X"
+            value={rotateX}
+            onChange={setRotateX}
+            min={-60}
+            max={60}
+            isPro={pro.isActive}
+          />
+          <Slider
+            label="Tilt Y"
+            value={rotateY}
+            onChange={setRotateY}
+            min={-60}
+            max={60}
+            isPro={pro.isActive}
+          />
+          <Slider
+            label="Rotate"
+            value={rotateZ}
+            onChange={setRotateZ}
+            min={-45}
+            max={45}
+            isPro={pro.isActive}
+          />
         </div>
       </div>
 
-      {!isPro && (
+      {!pro.isActive && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-2">
           <div className="rounded-xl border border-rose-200/50 bg-white/90 p-4 shadow-xl backdrop-blur-md text-center">
             <h4 className="text-sm font-bold text-rose-900">3D Perspective</h4>
             <p className="mt-1 text-xs font-medium text-rose-700/80 leading-relaxed">
-              Unlock stunning 3D rotations and isometric presets to make your screenshots pop.
+              Unlock stunning 3D rotations and isometric presets to make your
+              screenshots pop.
             </p>
             <Button
-              onPress={() => router.push("/login", { auth: true, next: "/checkout" })}
+              onPress={() =>
+                router.push("/login", { auth: true, next: "/checkout" })
+              }
               className="mt-3 w-full bg-linear-to-r from-orange-500 to-rose-500 font-bold text-white shadow-md shadow-rose-500/20 transition-transform hover:scale-[1.02]"
               size="sm"
             >
