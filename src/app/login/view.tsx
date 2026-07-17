@@ -15,6 +15,7 @@ export default function LoginPageView() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
+      console.log("url", url);
       console.log(
         "url",
         `${window.location.origin}/auth/callback/${url.search}`,
