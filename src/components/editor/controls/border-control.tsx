@@ -1,6 +1,8 @@
 "use client";
 
 import { useEditorStore } from "@/stores/editor-store";
+import { motion, LayoutGroup } from "framer-motion";
+import { useId } from "react";
 
 const RADIUS_PRESETS = [0, 8, 16, 24, 48];
 const COLORS = [
@@ -38,6 +40,7 @@ function rgbaToHex(r: number, g: number, b: number) {
 }
 
 export function BorderControl() {
+  const uid = useId();
   const {
     borderRadius,
     setBorderRadius,
@@ -187,27 +190,32 @@ export function BorderControl() {
           />
         </div>
 
-        <div className="flex gap-2">
-          {RADIUS_PRESETS.map((r) => (
-            <button
-              key={r}
-              onClick={() => setBorderRadius(r)}
-              className={`flex flex-col items-center gap-1.5 rounded-lg px-2 py-2 transition-all ${
-                borderRadius === r
-                  ? "bg-violet-50 ring-2 ring-violet-400"
-                  : "hover:bg-zinc-50"
-              }`}
-            >
-              <div
-                className="size-8 bg-linear-to-br from-violet-300 to-purple-400"
-                style={{ borderRadius: `${Math.min(r, 16)}px` }}
-              />
-              <span className="text-[10px] font-semibold text-zinc-500">
-                {r}
-              </span>
-            </button>
-          ))}
-        </div>
+        <LayoutGroup id={`border-radius-${uid}`}>
+          <div className="flex gap-2 relative">
+            {RADIUS_PRESETS.map((r) => (
+              <button
+                key={r}
+                onClick={() => setBorderRadius(r)}
+                className="group relative flex flex-col items-center gap-1.5 rounded-lg px-2 py-2 transition-all hover:bg-zinc-50"
+              >
+                {borderRadius === r && (
+                  <motion.div
+                    layoutId="border-radius-indicator"
+                    className="absolute inset-0 rounded-lg bg-violet-50 ring-2 ring-violet-400"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <div
+                  className="relative z-10 size-8 bg-linear-to-br from-violet-300 to-purple-400 shadow-sm ring-1 ring-black/10 transition-transform group-hover:scale-105"
+                  style={{ borderRadius: `${Math.min(r, 16)}px` }}
+                />
+                <span className="relative z-10 text-[10px] font-semibold text-zinc-500">
+                  {r}
+                </span>
+              </button>
+            ))}
+          </div>
+        </LayoutGroup>
       </div>
     </div>
   );

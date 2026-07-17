@@ -6,11 +6,14 @@ import { useRouter } from "@/hooks/use-router";
 import { Laptop, Monitor, AppWindow, Square } from "lucide-react";
 import { Button } from "@heroui/react";
 import { isPro } from "@/lib/utils";
+import { motion, LayoutGroup } from "framer-motion";
+import { useId } from "react";
 
 export function FrameControl() {
+  const uid = useId();
   const { deviceFrame, setDeviceFrame } = useEditorStore();
   const { user } = useAppStore();
-  const pro = isPro(user)
+  const pro = isPro(user);
   const router = useRouter();
 
   const handleSetFrame = (frame: "none" | "macos" | "windows" | "glass") => {
@@ -30,37 +33,48 @@ export function FrameControl() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {frames.map((frame) => {
-          const isSelected = deviceFrame === frame.id;
-          const isLocked = !isPro && frame.id !== "none";
+      <LayoutGroup id={`device-frame-${uid}`}>
+        <div className="flex flex-wrap gap-2 relative">
+          {frames.map((frame) => {
+            const isSelected = deviceFrame === frame.id;
+            const isLocked = !pro.isActive && frame.id !== "none";
 
-          return (
-            <button
-              key={frame.id}
-              onClick={() => handleSetFrame(frame.id)}
-              className={`group relative flex flex-col size-20 justify-center items-center gap-2 rounded-xl border p-3 transition-all ${
-                isSelected
-                  ? "border-orange-500 bg-orange-50/50 text-orange-600 shadow-sm"
-                  : "border-transparent bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
-              }`}
-            >
-              {frame.icon}
-              <span className="text-[10px] font-bold">{frame.label}</span>
-
-              {isLocked && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/60 backdrop-blur-[1px] transition-all hover:bg-white/80">
-                  <div className="rounded-full bg-linear-to-r from-orange-500 to-rose-500 px-2 py-0.5 text-[8px] font-bold text-white shadow-sm transition-transform group-hover:scale-105">
-                    PRO
-                  </div>
+            return (
+              <button
+                key={frame.id}
+                onClick={() => handleSetFrame(frame.id)}
+                className={`group relative flex flex-col size-20 justify-center items-center gap-2 rounded-xl p-3 transition-all ${
+                  isSelected
+                    ? "text-orange-600"
+                    : "bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
+                }`}
+              >
+                {isSelected && (
+                  <motion.div
+                    layoutId="frame-indicator"
+                    className="absolute inset-0 rounded-xl border-2 border-orange-500 bg-orange-50/50 shadow-sm"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <div className="relative z-10 transition-transform group-hover:scale-105">
+                  {frame.icon}
                 </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
+                <span className="relative z-10 text-[10px] font-bold">{frame.label}</span>
+
+                {isLocked && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-white/60 backdrop-blur-[1px] transition-all hover:bg-white/80">
+                    <div className="rounded-full bg-linear-to-r from-orange-500 to-rose-500 px-2 py-0.5 text-[8px] font-bold text-white shadow-sm transition-transform group-hover:scale-105">
+                      PRO
+                    </div>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </LayoutGroup>
       
-      {!isPro && (
+      {!pro.isActive && (
         <div className="rounded-xl border border-rose-200/50 bg-linear-to-br from-orange-50 to-rose-50 p-4">
           <h4 className="text-sm font-bold text-rose-900">Premium Mockups</h4>
           <p className="mt-1 text-xs font-medium text-rose-700/80">

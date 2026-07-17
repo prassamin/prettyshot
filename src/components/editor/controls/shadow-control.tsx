@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, LayoutGroup } from "framer-motion";
+import { useId } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { SHADOW_PRESETS } from "@/lib/presets";
 
@@ -18,6 +19,7 @@ const QUICK_COLORS = [
 ];
 
 export function ShadowControl() {
+  const uid = useId();
   const { shadowPreset, setShadowPreset, shadowColor, setShadowColor } =
     useEditorStore();
 
@@ -28,37 +30,39 @@ export function ShadowControl() {
   return (
     <div className="space-y-3">
       {/* Preset grid */}
-      <div className="grid grid-cols-3 gap-2">
-        {SHADOW_PRESETS.map((preset) => (
-          <button
-            key={preset.name}
-            onClick={() => setShadowPreset(preset.name)}
-            className="group relative flex flex-col items-center gap-2 rounded-xl px-1 py-3 transition-all"
-          >
-            {shadowPreset === preset.name && (
-              <motion.div
-                layoutId="shadow-active"
-                className="absolute inset-0 rounded-xl bg-orange-50 ring-2 ring-orange-400"
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              />
-            )}
-            <div className="relative flex size-10 items-center justify-center">
-              <div
-                className="size-8 rounded-lg bg-muted/20 ring-1 ring-black/5"
-                style={{
-                  boxShadow:
-                    preset.style === "none"
-                      ? undefined
-                      : resolveStyle(preset.style, "#000000"),
-                }}
-              />
-            </div>
-            <span className="relative text-[10px] font-semibold text-zinc-500">
-              {preset.name}
-            </span>
-          </button>
-        ))}
-      </div>
+      <LayoutGroup id={`shadow-presets-${uid}`}>
+        <div className="grid grid-cols-3 gap-2">
+          {SHADOW_PRESETS.map((preset) => (
+            <button
+              key={preset.name}
+              onClick={() => setShadowPreset(preset.name)}
+              className="group relative flex flex-col items-center gap-2 rounded-xl px-1 py-3 transition-all hover:bg-zinc-50"
+            >
+              {shadowPreset === preset.name && (
+                <motion.div
+                  layoutId="shadow-preset-indicator"
+                  className="absolute inset-0 rounded-xl bg-orange-50 ring-2 ring-orange-400"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              <div className="relative flex size-10 items-center justify-center">
+                <div
+                  className="size-8 rounded-lg bg-muted/20 ring-1 ring-black/5"
+                  style={{
+                    boxShadow:
+                      preset.style === "none"
+                        ? undefined
+                        : resolveStyle(preset.style, "#000000"),
+                  }}
+                />
+              </div>
+              <span className="relative text-[10px] font-semibold text-zinc-500">
+                {preset.name}
+              </span>
+            </button>
+          ))}
+        </div>
+      </LayoutGroup>
 
       {/* Shadow color */}
       {shadowPreset !== "None" && (

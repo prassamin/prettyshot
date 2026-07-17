@@ -16,11 +16,13 @@ import {
   MoreVertical,
   PanelsRightBottomIcon,
   FolderClosed,
+  Settings,
 } from "lucide-react";
 import { Avatar, Button, Dropdown, Label } from "@heroui/react";
 import { createClient } from "@/lib/supabase/client";
 import { useEditorStore } from "@/stores/editor-store";
 import { cn, isPro } from "@/lib/utils";
+import { ADMIN_EMAILS } from "@/config";
 
 export const navigation = [
   { name: "Overview", href: "/dashboard", icon: Home },
@@ -56,6 +58,13 @@ export function Sidebar({
   if (!user) return null;
 
   const pro = isPro(user);
+
+  const dynamicNavigation = [
+    ...navigation,
+    ...(user.email && ADMIN_EMAILS.includes(user.email)
+      ? [{ name: "Admin Portal", href: "/dashboard/admin", icon: Settings }]
+      : []),
+  ];
 
   return (
     <aside
@@ -122,7 +131,7 @@ export function Sidebar({
           )}
         </div>
 
-        {navigation.map((item) => {
+        {dynamicNavigation.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link

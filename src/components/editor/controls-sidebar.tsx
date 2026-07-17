@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useId } from "react";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   Palette,
   Maximize,
   Frame,
   Layers3,
   RotateCw,
-  ChevronDown,
   Monitor,
   Stamp,
 } from "lucide-react";
@@ -68,61 +67,6 @@ const sections: Section[] = [
   },
 ];
 
-/* ─── accordion section ─── */
-
-function AccordionSection({
-  section,
-  open,
-  onToggle,
-  children,
-}: {
-  section: Section;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-b border-zinc-200/50 last:border-b-0">
-      <button
-        onClick={onToggle}
-        className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-zinc-50/60"
-      >
-        <div
-          className={cn(
-            `flex size-7 shrink-0 items-center justify-center rounded-lg bg-linear-to-br text-white shadow-sm`,
-            section.gradient,
-          )}
-        >
-          {section.icon}
-        </div>
-        <span className="flex-1 text-sm font-semibold text-zinc-700">
-          {section.label}
-        </span>
-        <motion.div
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.25 }}
-        >
-          <ChevronDown className="size-4 text-zinc-400" />
-        </motion.div>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden"
-          >
-            <div className="px-5 pb-4 pt-1">{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 /* ─── sidebar ─── */
 
 interface ControlsSidebarProps {
@@ -130,102 +74,148 @@ interface ControlsSidebarProps {
 }
 
 export function ControlsSidebar({ sectionContent }: ControlsSidebarProps) {
-  const [openSections, setOpenSections] = useState<Set<string>>(
-    new Set(["background", "frame", "padding"]),
-  );
-
-  function toggleSection(id: string) {
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  const [activeMobileTab, setActiveMobileTab] = useState<string>("background");
+  const uid = useId();
+  const [activeTab, setActiveTab] = useState<string>("background");
 
   return (
     <>
-      {/* Desktop Accordion Layout (hidden on mobile) */}
+      {/* Desktop Canva-Style Layout (hidden on mobile) */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1, duration: 0.3 }}
-        className="hidden lg:block h-full overflow-y-auto"
+        className="hidden lg:flex h-full w-full"
       >
-        <div className="border-b border-zinc-200/50 px-5 py-3 sticky top-0 bg-white/80 backdrop-blur-md z-10">
-          <h2 className="text-xs font-bold tracking-wider text-zinc-400 uppercase">
-            Customize
-          </h2>
-        </div>
-
-        {sections.map((section) => (
-          <AccordionSection
-            key={section.id}
-            section={section}
-            open={openSections.has(section.id)}
-            onToggle={() => toggleSection(section.id)}
-          >
-            {sectionContent?.[section.id] ?? (
+        {/* Secondary Panel (Content) */}
+        <div className="flex-1 bg-white flex flex-col overflow-hidden border-r border-zinc-200/50">
+          <div className="border-b border-zinc-200/50 px-5 py-4 shrink-0 bg-white/90 backdrop-blur-md z-10">
+            <h2 className="text-sm font-bold text-zinc-800">
+              {sections.find((s) => s.id === activeTab)?.label}
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto px-5 py-5">
+            {sectionContent?.[activeTab] ?? (
               <p className="text-xs text-zinc-400">Coming soon...</p>
             )}
-          </AccordionSection>
-        ))}
+          </div>
+        </div>
+
+        {/* Primary Sidebar (Slim Icons on the far right) */}
+        <LayoutGroup id={`primary-sidebar-desktop-${uid}`}>
+          <div className="w-[84px] shrink-0 bg-zinc-50 flex flex-col items-center py-2 overflow-y-auto hide-scrollbar relative">
+            {sections.map((section) => {
+              const isActive = activeTab === section.id;
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveTab(section.id)}
+                  className={cn(
+                    "flex w-full flex-col items-center gap-1.5 py-3.5 transition-colors relative z-10",
+                    isActive
+                      ? "text-zinc-900"
+                      : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/50",
+                  )}
+                >
+                  {isActive && (
+                    <>
+                      <motion.div
+                        layoutId="sidebar-bg"
+                        className="absolute inset-0 bg-white shadow-[-2px_0_10px_rgba(0,0,0,0.02)] z-[-1]"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                      <motion.div
+                        layoutId="sidebar-indicator"
+                        className="absolute right-0 top-0 bottom-0 w-1 bg-orange-500 rounded-l-md z-10"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    </>
+                  )}
+                  <div
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-xl shadow-sm transition-transform",
+                      isActive
+                        ? cn("bg-linear-to-br text-white scale-105", section.gradient)
+                        : "bg-white text-zinc-400 ring-1 ring-zinc-200",
+                    )}
+                  >
+                    {section.icon}
+                  </div>
+                  <span
+                    className={cn(
+                      "text-[10px] text-center leading-tight px-1",
+                      isActive ? "font-bold" : "font-medium"
+                    )}
+                  >
+                    {section.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </LayoutGroup>
       </motion.div>
 
       {/* Mobile Tabs Layout (hidden on desktop) */}
       <div className="flex lg:hidden flex-col h-full bg-white">
         {/* Horizontal scrollable tab row */}
-        <div className="flex overflow-x-auto border-b border-zinc-200/50 px-2 py-2 gap-1 bg-zinc-50/50">
-          {sections.map((section) => {
-            const isActive = activeMobileTab === section.id;
-            return (
-              <button
-                key={section.id}
-                onClick={() => setActiveMobileTab(section.id)}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap transition-all duration-300",
-                  isActive
-                    ? "bg-white text-zinc-900"
-                    : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/50",
-                )}
-              >
-                <div
+        <LayoutGroup id={`primary-sidebar-mobile-${uid}`}>
+          <div className="flex overflow-x-auto border-b border-zinc-200/50 px-2 py-2 gap-1 bg-zinc-50/50 hide-scrollbar relative">
+            {sections.map((section) => {
+              const isActive = activeTab === section.id;
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveTab(section.id)}
                   className={cn(
-                    "flex size-6 shrink-0 items-center justify-center rounded-md text-white shadow-sm transition-transform",
+                    "flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap transition-colors relative z-10",
                     isActive
-                      ? cn("bg-linear-to-br scale-100", section.gradient)
-                      : "bg-zinc-200 text-zinc-400 scale-90",
+                      ? "text-zinc-900"
+                      : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/50",
                   )}
                 >
-                  {section.icon}
-                </div>
-                <span
-                  className={cn(
-                    "text-xs font-semibold",
-                    isActive ? "" : "font-medium",
+                  {isActive && (
+                    <motion.div
+                      layoutId="mobile-sidebar-bg"
+                      className="absolute inset-0 bg-white rounded-xl shadow-sm z-[-1]"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
                   )}
-                >
-                  {section.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <div
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-md text-white shadow-sm transition-transform",
+                      isActive
+                        ? cn("bg-linear-to-br scale-100", section.gradient)
+                        : "bg-zinc-200 text-zinc-400 scale-90",
+                    )}
+                  >
+                    {section.icon}
+                  </div>
+                  <span
+                    className={cn(
+                      "text-xs font-semibold",
+                      isActive ? "" : "font-medium",
+                    )}
+                  >
+                    {section.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </LayoutGroup>
 
         {/* Active section content area with smooth sliding transition */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
-              key={activeMobileTab}
+              key={activeTab}
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -20, opacity: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               className="absolute inset-0 px-5 py-4 h-max"
             >
-              {sectionContent?.[activeMobileTab] ?? (
+              {sectionContent?.[activeTab] ?? (
                 <p className="text-xs text-zinc-400">Coming soon...</p>
               )}
             </motion.div>

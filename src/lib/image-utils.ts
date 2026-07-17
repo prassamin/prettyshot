@@ -3,10 +3,13 @@ import { createClient } from "@/lib/supabase/client";
 /**
  * Converts a base64 Data URL to a highly compressed WebP Data URL
  */
-export async function compressToWebP(dataUrl: string, quality = 0.8): Promise<string> {
+export async function compressToWebP(
+  dataUrl: string,
+  quality = 0.8,
+): Promise<string> {
   // If it's already a URL (e.g. from a previously saved design) or not base64, return it
   if (!dataUrl.startsWith("data:image")) return dataUrl;
-  
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -14,10 +17,10 @@ export async function compressToWebP(dataUrl: string, quality = 0.8): Promise<st
       const canvas = document.createElement("canvas");
       canvas.width = img.width;
       canvas.height = img.height;
-      
+
       const ctx = canvas.getContext("2d");
       if (!ctx) return reject(new Error("Failed to get canvas context"));
-      
+
       ctx.drawImage(img, 0, 0);
       resolve(canvas.toDataURL("image/webp", quality));
     };
@@ -55,34 +58,79 @@ export async function hashBlob(blob: Blob): Promise<string> {
  * Compresses an image to WebP, hashes it, and uploads it to Supabase if it doesn't exist.
  * Returns the public URL of the image.
  */
-export async function uploadImageDeduplicated(dataUrl: string): Promise<string> {
+export async function uploadImageDeduplicated(
+  dataUrl: string,
+  userId: string,
+  folder: "default" | "bg" = "default",
+): Promise<string> {
   // If it's already an uploaded URL, just return it
   if (dataUrl.startsWith("http")) return dataUrl;
 
-  // 1. Compress to WebP
+  // Compress to WebP
   const webpDataUrl = await compressToWebP(dataUrl, 0.8);
   const blob = dataURLtoBlob(webpDataUrl);
-  
-  // 2. Hash it to generate a unique, content-addressable filename
+
+  // Hash it to generate a unique filename
   const hash = await hashBlob(blob);
   const fileName = `${hash}.webp`;
-  
+
+  // Construct the path: design-images/{userId}/[bg/]{fileName}
+  const subFolder = folder === "bg" ? "bg/" : "";
+  const filePath = `design-images/${userId}/${subFolder}${fileName}`;
+
   const supabase = createClient();
-  const bucket = supabase.storage.from("design-images");
-  
-  // 3. Attempt upload. upsert: false ensures we don't overwrite if it exists (saves a write operation).
-  const { error } = await bucket.upload(fileName, blob, {
+  const bucket = supabase.storage.from("prettyshot");
+
+  // Attempt upload. upsert: false ensures we don't overwrite if it exists.
+  const { error } = await bucket.upload(filePath, blob, {
     contentType: "image/webp",
-    upsert: false 
+    upsert: false,
   });
-  
-  // Note: if error exists, it's highly likely a "Duplicate" error meaning the image is already uploaded.
-  // We can safely ignore it and just return the public URL!
-  if (error && (error as any).statusCode !== "409" && !error.message.includes("Duplicate")) {
-    console.warn("Upload error (might be duplicate, proceeding anyway):", error);
+
+  if (
+    error &&
+    (error as any).statusCode !== "409" &&
+    !error.message.includes("Duplicate")
+  ) {
+    console.warn(
+      "Upload error (might be duplicate, proceeding anyway):",
+      error,
+    );
   }
-  
-  // 4. Return Public URL
-  const { data } = bucket.getPublicUrl(fileName);
+
+  // Return Public URL
+  const { data } = bucket.getPublicUrl(filePath);
   return data.publicUrl;
+}
+
+export const getPublicUrl = (path: string, bucket: string = "prettyshot") => {
+  if (path && path.startsWith("http")) return path;
+  const supabase = createClient();
+  return supabase.storage
+    .from(bucket)
+    .getPublicUrl(path).data.publicUrl;
+};
+
+/**
+ * Deletes an image from the Supabase bucket given its public URL
+ */
+export async function deleteImageByUrl(publicUrl: string, bucket: string = "prettyshot"): Promise<void> {
+  if (!publicUrl || !publicUrl.includes("supabase.co")) return;
+
+  try {
+    // The public URL format is typically: 
+    // https://[projectId].supabase.co/storage/v1/object/public/[bucket]/[filePath]
+    const urlParts = publicUrl.split(`/public/${bucket}/`);
+    if (urlParts.length !== 2) return;
+
+    const filePath = urlParts[1];
+    const supabase = createClient();
+    
+    const { error } = await supabase.storage.from(bucket).remove([filePath]);
+    if (error) {
+      console.error("Failed to delete old image:", error);
+    }
+  } catch (e) {
+    console.error("Error deleting image:", e);
+  }
 }

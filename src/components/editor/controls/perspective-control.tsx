@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, LayoutGroup } from "framer-motion";
+import { useId } from "react";
 import { RotateCcw } from "lucide-react";
 import { useEditorStore } from "@/stores/editor-store";
 import { useAppStore } from "@/stores/app-store";
@@ -69,6 +70,7 @@ function Slider({
 }
 
 export function PerspectiveControl() {
+  const uid = useId();
   const { rotateX, rotateY, rotateZ, setRotateX, setRotateY, setRotateZ } =
     useEditorStore();
 
@@ -95,42 +97,44 @@ export function PerspectiveControl() {
         )}
       >
         {/* Presets */}
-        <div className="grid grid-cols-3 gap-2">
-          {TILT_PRESETS.map((preset) => (
-            <button
-              key={preset.name}
-              onClick={() => {
-                if (!pro.isActive) return;
-                setRotateX(preset.x);
-                setRotateY(preset.y);
-                setRotateZ(preset.z);
-              }}
-              className="group relative flex flex-col items-center gap-1.5 rounded-xl px-1 py-2.5 transition-all hover:bg-zinc-50"
-            >
-              {isActive(preset) && (
-                <motion.div
-                  layoutId="tilt-active"
-                  className="absolute inset-0 rounded-xl bg-orange-50 ring-2 ring-orange-400"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-              <div
-                className="relative flex size-9 items-center justify-center"
-                style={{ perspective: "120px" }}
+        <LayoutGroup id={`perspective-presets-${uid}`}>
+          <div className="grid grid-cols-3 gap-2">
+            {TILT_PRESETS.map((preset) => (
+              <button
+                key={preset.name}
+                onClick={() => {
+                  if (!pro.isActive) return;
+                  setRotateX(preset.x);
+                  setRotateY(preset.y);
+                  setRotateZ(preset.z);
+                }}
+                className="group relative flex flex-col items-center gap-1.5 rounded-xl px-1 py-2.5 transition-all hover:bg-zinc-50"
               >
+                {isActive(preset) && (
+                  <motion.div
+                    layoutId="tilt-preset-indicator"
+                    className="absolute inset-0 rounded-xl bg-orange-50 ring-2 ring-orange-400"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
                 <div
-                  className="size-7 rounded-sm bg-zinc-200 ring-1 ring-black/10 transition-transform duration-300 group-hover:scale-110"
-                  style={{
-                    transform: `rotateX(${preset.x}deg) rotateY(${preset.y}deg) rotateZ(${preset.z}deg)`,
-                  }}
-                />
-              </div>
-              <span className="relative text-[9px] font-semibold text-zinc-500">
-                {preset.name}
-              </span>
-            </button>
-          ))}
-        </div>
+                  className="relative flex size-9 items-center justify-center"
+                  style={{ perspective: "120px" }}
+                >
+                  <div
+                    className="size-7 rounded-sm bg-zinc-200 ring-1 ring-black/10 transition-transform duration-300 group-hover:scale-110"
+                    style={{
+                      transform: `rotateX(${preset.x}deg) rotateY(${preset.y}deg) rotateZ(${preset.z}deg)`,
+                    }}
+                  />
+                </div>
+                <span className="relative text-[9px] font-semibold text-zinc-500">
+                  {preset.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </LayoutGroup>
 
         {/* Custom sliders */}
         <div className="space-y-2 border-t border-zinc-100 pt-3">

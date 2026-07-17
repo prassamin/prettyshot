@@ -18,6 +18,7 @@ import { captureElement, downloadImage, copyToClipboard } from "@/lib/export";
 import { useRouter } from "@/hooks/use-router";
 import { AspectRatioDropdown } from "./aspect-ratio-dropdown";
 import { isPro } from "@/lib/utils";
+import { deleteImageByUrl } from "@/lib/image-utils";
 
 export function EditorTopbar() {
   const {
@@ -160,10 +161,17 @@ export function EditorTopbar() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const oldImage = useEditorStore.getState().image;
+
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const result = event.target?.result as string;
       setImage(result, file.name);
+
+      // Clean up the old image from Supabase storage if it exists
+      if (oldImage && typeof oldImage === "string" && oldImage.includes("supabase.co")) {
+        await deleteImageByUrl(oldImage);
+      }
     };
     reader.readAsDataURL(file);
 
@@ -211,13 +219,14 @@ export function EditorTopbar() {
             onChange={handleFileChange}
           />
           <Button
-            variant="ghost"
+            variant="flat"
             size="sm"
+            color="secondary"
             onPress={() => fileInputRef.current?.click()}
-            className="font-semibold text-zinc-500"
+            className="font-bold bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
           >
             <ImagePlus className="size-4" />
-            <span className="hidden sm:inline">New</span>
+            <span className="hidden sm:inline">Replace</span>
           </Button>
 
           {/* Export button + dropdown */}

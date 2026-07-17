@@ -26,15 +26,33 @@ CREATE POLICY "Users can delete their own designs" ON public.designs
 
 -- Create a storage bucket for uploaded images and backgrounds
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('design-images', 'design-images', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+VALUES ('prettyshot', 'prettyshot', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 ON CONFLICT (id) DO NOTHING;
 
 -- Enable RLS for the storage bucket objects
 CREATE POLICY "Public Access" ON storage.objects
-    FOR SELECT USING (bucket_id = 'design-images');
+    FOR SELECT USING (bucket_id = 'prettyshot');
 
-CREATE POLICY "Any authenticated user can upload images" ON storage.objects
+CREATE POLICY "Users can upload to their own folder" ON storage.objects
     FOR INSERT WITH CHECK (
-        bucket_id = 'design-images' AND 
-        auth.role() = 'authenticated'
+        bucket_id = 'prettyshot' AND 
+        auth.role() = 'authenticated' AND
+        (storage.foldername(name))[1] = 'design-images' AND
+        (storage.foldername(name))[2] = auth.uid()::text
+    );
+
+CREATE POLICY "Users can update their own folder" ON storage.objects
+    FOR UPDATE USING (
+        bucket_id = 'prettyshot' AND 
+        auth.role() = 'authenticated' AND
+        (storage.foldername(name))[1] = 'design-images' AND
+        (storage.foldername(name))[2] = auth.uid()::text
+    );
+
+CREATE POLICY "Users can delete their own folder" ON storage.objects
+    FOR DELETE USING (
+        bucket_id = 'prettyshot' AND 
+        auth.role() = 'authenticated' AND
+        (storage.foldername(name))[1] = 'design-images' AND
+        (storage.foldername(name))[2] = auth.uid()::text
     );

@@ -83,7 +83,7 @@ export function EditorView({ initialConfig, serverId }: { initialConfig?: any, s
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full h-[45vh] lg:h-full lg:w-85 shrink-0 border-t lg:border-t-0 lg:border-l border-zinc-200/60 bg-white/80 backdrop-blur-xl z-10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] lg:shadow-none"
+          className="w-full h-[45vh] lg:h-full lg:w-[400px] shrink-0 border-t lg:border-t-0 lg:border-l border-zinc-200/60 bg-white/80 backdrop-blur-xl z-10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] lg:shadow-none"
         >
           <ControlsSidebar sectionContent={sectionContent} />
         </motion.aside>

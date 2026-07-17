@@ -15,7 +15,7 @@ export interface EditorState {
   image: string | null;
   imageName: string;
   // Background
-  bgType: "gradient" | "mesh" | "solid" | "image";
+  bgType: "gradient" | "mesh" | "solid" | "image" | "custom";
   bgGradient: string;
   bgMesh: string;
   bgSolid: string;
