@@ -8,6 +8,6 @@ export default function DashboardOverviewPage() {
 export async function generateMetadata() {
   return metatag({
     title: "Dashboard",
-    robots: "index, follow",
+    robots: "noindex, nofollow",
   });
 }

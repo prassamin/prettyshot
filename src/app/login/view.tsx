@@ -188,14 +188,14 @@ export default function LoginPageView() {
                   We care about your privacy. By continuing, you agree to our{" "}
                   <br />
                   <Link
-                    href="#"
+                    href="/terms"
                     className="text-zinc-600 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-900"
                   >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
                   <Link
-                    href="#"
+                    href="/privacy"
                     className="text-zinc-600 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-900"
                   >
                     Privacy Policy

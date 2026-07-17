@@ -40,6 +40,13 @@ const footerLinks = [
       },
     ],
   },
+  {
+    title: "Legal",
+    links: [
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
+    ],
+  },
 ];
 
 export function Footer() {
@@ -76,8 +83,7 @@ export function Footer() {
             </Link>
 
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-zinc-500">
-              Make your screenshots look stunning in seconds. Free, open source,
-              and runs entirely in your browser. No signup.
+              Make your screenshots look stunning in seconds. Free to start, no signup required.
             </p>
 
             {/* Social icons */}
@@ -92,7 +98,7 @@ export function Footer() {
                 <Github className="size-4 text-zinc-500 transition-colors group-hover:text-white" />
               </a>
               <a
-                href="https://x.com/imprassamin"
+                href="https://x.com/prassami"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex size-10 items-center justify-center rounded-xl bg-white/4 ring-1 ring-white/6 transition-all duration-300 hover:bg-white/8 hover:ring-white/12"

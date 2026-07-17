@@ -6,7 +6,7 @@ export const generateMetadata = () => {
   return metatag({
     title: `Editor`,
     description:
-      "Beautify your screenshots with gradient backgrounds, mesh gradients, shadows, noise texture, perspective tilt, and more. Export in PNG or JPG at up to 3x scale.",
+      "Drop any screenshot, pick a style, and export a beautiful image in seconds. Free to use, or upgrade to Lifetime Pro for cloud sync and 4K export.",
   });
 };
 

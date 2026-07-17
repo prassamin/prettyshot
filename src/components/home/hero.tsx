@@ -363,20 +363,6 @@ export function Hero() {
       <div className="relative mx-auto max-w-6xl px-5">
         {/* Text content */}
         <div className="mx-auto max-w-3xl pb-10 text-center sm:pb-14 md:pb-16">
-          {/* Pill badge */}
-          <motion.div
-            variants={fadeUp(0)}
-            initial="hidden"
-            animate="visible"
-            className="mb-7 inline-flex items-center gap-2.5 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold text-zinc-600 shadow-lg shadow-orange-100/30 ring-1 ring-zinc-200/50 backdrop-blur-sm sm:text-sm"
-          >
-            <span className="relative flex size-5 items-center justify-center rounded-full bg-linear-to-r from-orange-400 to-rose-400 shadow-sm shadow-orange-300/40">
-              <Zap className="size-2.5 text-white" strokeWidth={3} />
-              <span className="absolute inset-0 animate-ping rounded-full bg-orange-400/30" />
-            </span>
-            Free &amp; open source
-          </motion.div>
-
           {/* Headline — word by word */}
           <motion.h1
             variants={stagger}
@@ -423,7 +409,7 @@ export function Hero() {
           >
             Drop any screenshot, pick a style, and export a
             <span className="text-zinc-600"> beautiful image </span>
-            in seconds. Zero signup, totally free.
+            in seconds. Free to use, with premium cloud features.
           </motion.p>
 
           {/* CTAs */}
@@ -461,8 +447,7 @@ export function Hero() {
             </Button>
           </motion.div>
 
-          {/* Product Hunt badge */}
-          <motion.div
+          {/* <motion.div
             variants={fadeUp(0.9)}
             initial="hidden"
             animate="visible"
@@ -480,7 +465,7 @@ export function Hero() {
                 height={54}
               />
             </a>
-          </motion.div>
+          </motion.div> */}
 
           {/* Feature pills */}
           <motion.div

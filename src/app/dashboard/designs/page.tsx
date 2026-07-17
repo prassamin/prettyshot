@@ -32,6 +32,6 @@ export default async function AllDesignsPage() {
 export async function generateMetadata() {
   return metatag({
     title: "Designs",
-    robots: "index, follow"
+    robots: "noindex, nofollow",
   });
 }

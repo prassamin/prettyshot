@@ -14,8 +14,7 @@ import { metatag } from "@/lib/metatag";
 export const generateMetadata = () => {
   return metatag({
     title: `${APP_NAME} | Every screenshot deserves to be remembered`,
-    description:
-      "Drop any screenshot, pick a style, and export a beautiful image in seconds. Gradient backgrounds, shadows, noise, perspective, zero signup, totally free.",
+    description:  "Drop any screenshot, pick a style, and export a beautiful image in seconds. Free to use, or upgrade to Lifetime Pro for cloud sync and 4K export.",
   });
 };
 
@@ -27,10 +26,10 @@ export default async function Home() {
     name: APP_NAME,
     url: origin,
     description:
-      "Drop any screenshot, pick a style, and export a beautiful image in seconds. Zero signup, totally free.",
+      "Drop any screenshot, pick a style, and export a beautiful image in seconds. Free to use, or upgrade to Lifetime Pro.",
     applicationCategory: "DesignApplication",
     operatingSystem: "Web",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    offers: { "@type": "Offer", price: "29.00", priceCurrency: "USD" },
   });
 
   return (

@@ -65,8 +65,8 @@ const features = [
   },
   {
     icon: Sparkles,
-    title: "Zero Signup",
-    description: "No account, no email, no BS. Open the editor and start creating.",
+    title: "Zero Signup Required",
+    description: "No account needed to start. Open the editor and create for free, or login for cloud sync.",
     gradient: "from-fuchsia-400 to-pink-500",
     accent: "#e879f9",
   },

@@ -15,7 +15,7 @@ const faqs = [
   },
   {
     q: "Where are my screenshots stored?",
-    a: "Nowhere! Everything happens client-side in your browser. We never see, store, or transmit your images. Your data stays on your device.",
+    a: "For Free users, nowhere! Everything happens strictly client-side in your browser. For Pro users, your designs are securely synced to our cloud so you can access them across all your devices.",
   },
   {
     q: "What export formats are supported?",
