@@ -15,6 +15,10 @@ export default function LoginPageView() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
+      console.log(
+        "url",
+        `${window.location.origin}/auth/callback/${url.search}`,
+      );
       await createOAuth("google", {
         redirectTo: `${window.location.origin}/auth/callback/${url.search}`,
       });
