@@ -63,11 +63,7 @@ export async function updateSession(request: NextRequest) {
     const url = new URL(await getOrigin());
     const currentUrl = new URL(await getCurrentUrl());
     url.pathname = "/login";
-    if (currentUrl.origin === url.origin) {
-      url.searchParams.set("next", currentUrl.pathname);
-    } else {
-      url.searchParams.set("next", currentUrl.href);
-    }
+      url.searchParams.set("next", currentUrl.pathname + currentUrl.search);
     return NextResponse.redirect(url);
   }
 
@@ -78,11 +74,15 @@ export async function updateSession(request: NextRequest) {
     const next = searchParams.get("next");
     if (next && next.startsWith("/")) {
       url.pathname = next;
+      // Note: If you want to preserve query params from 'next', you'd need to parse it here too,
+      // but usually 'next' already includes the ?query string from the previous step.
     } else if (
       next &&
       (next.startsWith("https://") || next.startsWith("http://"))
     ) {
       url.href = next;
+    } else {
+      url.pathname = "/";
     }
     return NextResponse.redirect(url);
   }
