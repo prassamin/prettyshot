@@ -6,9 +6,9 @@ import { Button, Chip } from "@heroui/react";
 import { useRouter } from "@/hooks/use-router";
 import { CreditCard, Crown, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { generateReceipt } from "./actions";
+import { generateInvoice, generateReceipt } from "./actions";
 import { type Order } from "@polar-sh/sdk/models/components/order";
-import { isPro } from "@/lib/utils";
+import { cn, isPro } from "@/lib/utils";
 
 export function BillingPageView({ orders }: { orders: Array<Order> }) {
   const { user } = useAppStore();
@@ -17,10 +17,15 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const handleReceiptDownload = async (id: string) => {
+  const handleReceiptOrInvoiceDownload = async (
+    id: string,
+    type: "receipt" | "invoice",
+  ) => {
+    const fn = type === "receipt" ? generateReceipt : generateInvoice;
     try {
       setDownloadingId(id);
-      const url = await generateReceipt(id);
+      const url = await fn(id);
+      console.error(url);
       if (url) {
         window.open(url, "_blank");
       } else {
@@ -219,6 +224,11 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
                 <tbody className="bg-white divide-y divide-zinc-200/80">
                   {orders.length > 0 ? (
                     orders.map((order) => {
+                      const hasReceipt = !!order?.receiptNumber;
+                      const hasInvoice = !!order?.isInvoiceGenerated;
+                      const canDownload = hasReceipt || hasInvoice;
+                      const isFreeOrder = !canDownload;
+
                       return (
                         <tr
                           key={order?.id}
@@ -234,8 +244,34 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
                               },
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-600">
-                            ${(order?.subtotalAmount / 100).toFixed(2)}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col">
+                              {order?.discountAmount > 0 ? (
+                                <>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-zinc-900">
+                                      ${(order.totalAmount / 100).toFixed(2)}
+                                    </span>
+                                    <span className="inline-flex items-center rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-emerald-700">
+                                      -
+                                      {Math.round(
+                                        (order.discountAmount /
+                                          order.subtotalAmount) *
+                                          100,
+                                      )}
+                                      %
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-zinc-400 line-through mt-0.5">
+                                    ${(order.subtotalAmount / 100).toFixed(2)}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-sm font-medium text-zinc-900">
+                                  ${(order?.totalAmount / 100).toFixed(2)}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-600">
                             Lifetime Pro
@@ -243,10 +279,26 @@ export function BillingPageView({ orders }: { orders: Array<Order> }) {
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             {order?.paid ? (
                               <Chip
-                                color="success"
-                                className="cursor-pointer"
-                                variant="secondary"
-                                onClick={() => handleReceiptDownload(order?.id)}
+                                color={isFreeOrder ? "default" : "success"}
+                                className={cn(
+                                  isFreeOrder
+                                    ? "cursor-not-allowed opacity-50"
+                                    : "cursor-pointer",
+                                )}
+                                variant={"secondary"}
+                                onClick={() => {
+                                  if (hasReceipt) {
+                                    handleReceiptOrInvoiceDownload(
+                                      order?.id,
+                                      "receipt",
+                                    );
+                                  } else if (hasInvoice) {
+                                    handleReceiptOrInvoiceDownload(
+                                      order?.id,
+                                      "invoice",
+                                    );
+                                  }
+                                }}
                               >
                                 {downloadingId === order?.id ? (
                                   <Loader2 className="size-4 animate-spin" />

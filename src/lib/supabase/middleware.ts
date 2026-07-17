@@ -2,7 +2,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/config/env";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { createRouteMatcher } from "../route-matcher";
-import { getCurrentUrl, getOrigin } from "../url";
+import { getOrigin } from "../url";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({

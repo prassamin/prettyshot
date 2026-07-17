@@ -61,3 +61,15 @@ export const generateReceipt = async (
     return null;
   }
 };
+
+export const generateInvoice = async (
+  orderId: string,
+): Promise<string | null> => {
+  try {
+    const invoice = await polar.orders.invoice({id: orderId})
+    return invoice.url;
+  } catch (error) {
+    console.error("Polar API Error:", error);
+    return null;
+  }
+};
