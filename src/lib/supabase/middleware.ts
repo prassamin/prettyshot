@@ -2,7 +2,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/config/env";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { createRouteMatcher } from "../route-matcher";
-import { getOrigin } from "../url";
+import { getCurrentUrl, getOrigin } from "../url";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -61,7 +61,13 @@ export async function updateSession(request: NextRequest) {
 
   if (!data?.claims.email && isProtectedRoute(request)) {
     const url = new URL(await getOrigin());
+    const currentUrl = new URL(await getCurrentUrl());
     url.pathname = "/login";
+    if (currentUrl.origin === url.origin) {
+      url.searchParams.set("next", currentUrl.pathname);
+    } else {
+      url.searchParams.set("next", currentUrl.href);
+    }
     return NextResponse.redirect(url);
   }
 
@@ -70,7 +76,6 @@ export async function updateSession(request: NextRequest) {
   if (data?.claims.email && authPages.includes(pathname)) {
     const url = new URL(await getOrigin());
     const next = searchParams.get("next");
-    console.log(next);
     if (next && next.startsWith("/")) {
       url.pathname = next;
     } else if (
@@ -79,7 +84,6 @@ export async function updateSession(request: NextRequest) {
     ) {
       url.href = next;
     }
-    console.log(url);
     return NextResponse.redirect(url);
   }
 
