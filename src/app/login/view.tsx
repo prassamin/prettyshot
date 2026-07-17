@@ -16,7 +16,7 @@ export default function LoginPageView() {
     setIsLoading(true);
     try {
       await createOAuth("google", {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback/${url.search}`,
       });
     } catch (error) {
       console.error("Login failed:", error);
@@ -81,7 +81,7 @@ export default function LoginPageView() {
                   className="inline-flex items-center gap-2 transition-transform"
                 >
                   <div className="flex size-10 p-1.5 items-center justify-center rounded-xl bg-zinc-900 shadow-lg shadow-zinc-900/20">
-                  <img src="/prettyshot.svg" alt="logo" />
+                    <img src="/prettyshot.svg" alt="logo" />
                   </div>
                   <span className="text-2xl font-bold tracking-tight text-zinc-900">
                     PrettyShot

@@ -61,9 +61,10 @@ export async function updateSession(request: NextRequest) {
 
   if (!data?.claims.email && isProtectedRoute(request)) {
     const url = new URL(await getOrigin());
-    const currentUrl = new URL(await getCurrentUrl());
+    const nextUrl = new URL(request.url);
+
     url.pathname = "/login";
-      url.searchParams.set("next", currentUrl.pathname + currentUrl.search);
+    url.searchParams.set("next", nextUrl.pathname + nextUrl.search);
     return NextResponse.redirect(url);
   }
 
@@ -74,8 +75,6 @@ export async function updateSession(request: NextRequest) {
     const next = searchParams.get("next");
     if (next && next.startsWith("/")) {
       url.pathname = next;
-      // Note: If you want to preserve query params from 'next', you'd need to parse it here too,
-      // but usually 'next' already includes the ?query string from the previous step.
     } else if (
       next &&
       (next.startsWith("https://") || next.startsWith("http://"))
