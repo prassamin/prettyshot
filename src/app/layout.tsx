@@ -21,7 +21,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
   const origin = await getOrigin();
   const title = `${APP_NAME} | Every screenshot deserves to be remembered`;
   const description =
-    "Drop any screenshot, pick a style, and export a beautiful image in seconds. Gradient backgrounds, shadows, noise, perspective, zero signup, totally free.";
+    "Drop any screenshot, pick a style, and export a beautiful image in seconds. Free to use, or upgrade to Lifetime Pro for cloud sync and 4K export.";
   return {
     metadataBase: new URL(origin),
     title: { default: title, template: `%s | ${APP_NAME}` },
