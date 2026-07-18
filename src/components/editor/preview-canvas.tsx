@@ -237,7 +237,7 @@ export function PreviewCanvas() {
     bgStyle.backgroundPosition = "center";
   } else if (bgType === "solid") {
     bgStyle.backgroundColor = bgSolid;
-  } else if (bgType === "image" && bgImage) {
+  } else if ((bgType === "image" || bgType === "custom") && bgImage) {
     bgStyle.backgroundImage = `url(${bgImage})`;
     bgStyle.backgroundSize = "cover";
     bgStyle.backgroundPosition = "center";

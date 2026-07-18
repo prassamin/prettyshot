@@ -20,14 +20,19 @@ export default async function EditorPage(props: { searchParams: Promise<{ [key: 
 
   if (id) {
     const supabase = await createServerClient();
-    const { data } = await supabase
-      .from("designs")
-      .select("config")
-      .eq("id", id)
-      .single();
-    
-    if (data?.config) {
-      initialConfig = data.config;
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data } = await supabase
+        .from("designs")
+        .select("config")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .single();
+      
+      if (data?.config) {
+        initialConfig = data.config;
+      }
     }
   }
 

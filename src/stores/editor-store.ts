@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { get, set, del } from "idb-keyval";
 import {
   GRADIENT_PRESETS,
   MESH_GRADIENT_PRESETS,
@@ -164,6 +165,17 @@ export const useEditorStore = create<EditorState>()(
         // We do want to persist everything so a refresh restores exactly where they were.
         return state;
       },
+      storage: createJSONStorage(() => ({
+        getItem: async (name: string): Promise<string | null> => {
+          return (await get(name)) || null;
+        },
+        setItem: async (name: string, value: string): Promise<void> => {
+          await set(name, value);
+        },
+        removeItem: async (name: string): Promise<void> => {
+          await del(name);
+        },
+      })),
     }
   )
 );

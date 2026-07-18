@@ -14,6 +14,7 @@ import {
   type Background,
 } from "@/app/actions/backgrounds";
 import { getPublicUrl } from "@/lib/image-utils";
+import { createClient } from "@/lib/supabase/client";
 import { Mesh } from "@/components/icons/mesh";
 
 const BG_TYPES = [
@@ -61,6 +62,7 @@ export function BackgroundControl() {
 
   const [backgrounds, setBackgrounds] = useState<Background[]>([]);
   const [loadingBgId, setLoadingBgId] = useState<string | null>(null);
+  const [customUploads, setCustomUploads] = useState<string[]>([]);
 
   // Cache fetched premium assets to avoid repeated server action calls
   const assetCache = useRef<
@@ -69,7 +71,29 @@ export function BackgroundControl() {
 
   useEffect(() => {
     getBackgrounds().then(setBackgrounds).catch(console.error);
-  }, []);
+    
+    // Fetch user's previous custom uploads
+    if (user?.id && pro.isActive) {
+      const fetchCustomUploads = async () => {
+        const supabase = createClient();
+        const { data, error } = await supabase.storage
+          .from("prettyshot")
+          .list(`design-images/${user.id}/bg`, {
+            sortBy: { column: "created_at", order: "desc" },
+            limit: 20
+          });
+          
+        if (data && !error) {
+          // Map to public URLs
+          const urls = data
+            .filter((file) => file.name !== ".emptyFolderPlaceholder")
+            .map((file) => getPublicUrl(`design-images/${user.id}/bg/${file.name}`));
+          setCustomUploads(urls);
+        }
+      };
+      fetchCustomUploads();
+    }
+  }, [user?.id, pro.isActive]);
 
   const handlePremiumClick = async (bg: Background) => {
     if (!pro.isActive && !bg.is_free) {
@@ -135,7 +159,15 @@ export function BackgroundControl() {
       reader.onload = () => {
         if (typeof reader.result === "string") {
           setBgImage(reader.result);
-          setBgType("image");
+          setBgType("custom");
+          
+          // Immediately show the newly uploaded image in the list
+          setCustomUploads((prev) => {
+            const newUrl = reader.result as string;
+            // Prevent exact duplicates just in case
+            if (prev.includes(newUrl)) return prev;
+            return [newUrl, ...prev];
+          });
         }
       };
       reader.readAsDataURL(file);
@@ -396,6 +428,31 @@ export function BackgroundControl() {
               <Upload className="size-4" />
               Upload Background Image
             </button>
+          )}
+
+          {/* Show previously uploaded images regardless of whether one is currently selected */}
+          {pro.isActive && customUploads.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-zinc-100">
+              <span className="text-xs font-semibold text-zinc-500">Previously Uploaded</span>
+              <div className="flex flex-wrap gap-2">
+                {customUploads.map((url) => (
+                  <button
+                    key={url}
+                    onClick={() => setBgImage(url)}
+                    className="group relative shrink-0"
+                  >
+                    {bgImage === url && (
+                      <div className="absolute -inset-1 rounded-xl bg-linear-to-br from-orange-400 to-violet-500 opacity-60" />
+                    )}
+                    <img
+                      src={url}
+                      alt="Custom Background"
+                      className="relative size-14 rounded-lg object-cover ring-1 ring-black/5 transition-transform group-hover:scale-105"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
           <input
             ref={fileInputRef}

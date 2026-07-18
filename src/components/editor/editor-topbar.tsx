@@ -219,9 +219,8 @@ export function EditorTopbar() {
             onChange={handleFileChange}
           />
           <Button
-            variant="flat"
+            variant="secondary"
             size="sm"
-            color="secondary"
             onPress={() => fileInputRef.current?.click()}
             className="font-bold bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
           >
