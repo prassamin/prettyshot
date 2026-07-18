@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@heroui/react";
-import { uploadBackground } from "@/app/actions/backgrounds";
+import { getUploadUrls, saveBackgroundMetadata } from "@/app/actions/backgrounds";
+import { createClient } from "@/lib/supabase/client";
 import { UploadCloud, CheckCircle2, AlertCircle } from "lucide-react";
 
 export function AdminForm() {
@@ -122,11 +123,41 @@ export function AdminForm() {
       formData.set("is_free", isFree.toString());
 
       // We have an image, it is a high-res asset
-      formData.set("asset_file", mainFile);
       const thumbFile = await generateThumbnail(mainFile);
-      formData.set("thumbnail_file", thumbFile);
 
-      await uploadBackground(formData);
+      const { 
+        uuid, 
+        thumbUploadToken, 
+        thumbPath, 
+        assetUploadToken, 
+        assetPath, 
+        assetBucket 
+      } = await getUploadUrls(mainFile.name, thumbFile.name, isFree);
+
+      const supabase = createClient();
+      
+      const { error: thumbUploadError } = await supabase.storage
+        .from("prettyshot")
+        .uploadToSignedUrl(thumbPath, thumbUploadToken, thumbFile);
+      
+      if (thumbUploadError) throw new Error("Thumbnail upload failed: " + thumbUploadError.message);
+
+      const { error: assetUploadError } = await supabase.storage
+        .from(assetBucket)
+        .uploadToSignedUrl(assetPath, assetUploadToken, mainFile);
+        
+      if (assetUploadError) throw new Error("Asset upload failed: " + assetUploadError.message);
+
+      await saveBackgroundMetadata(
+        uuid, 
+        formData.get("name") as string, 
+        category, 
+        isFree, 
+        thumbPath, 
+        assetPath, 
+        assetBucket
+      );
+
       setSuccess(true);
       (e.target as HTMLFormElement).reset();
       setSelectedFile(null);

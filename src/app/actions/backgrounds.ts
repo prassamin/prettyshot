@@ -104,93 +104,86 @@ export async function getPremiumAsset(id: string) {
   return { url: data.signedUrl };
 }
 
-export async function uploadBackground(formData: FormData) {
+export async function getUploadUrls(
+  assetFileName: string,
+  thumbnailFileName: string,
+  isFree: boolean
+) {
   const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user || !user.email) {
-    throw new Error("Unauthorized.");
-  }
-
+  const { data: { user } } = await supabase.auth.getUser();
   const { ADMIN_EMAILS } = await import("@/config");
-  if (!ADMIN_EMAILS.includes(user.email)) {
-    throw new Error("Nice try, hacker. Admin access only.");
-  }
-
-  const name = formData.get("name") as string;
-  const category = formData.get("category") as "mesh" | "image";
-  const isFree = formData.get("is_free") === "true";
-  const thumbnailFile = formData.get("thumbnail_file") as File | null;
-  const assetFile = formData.get("asset_file") as File | null;
-
-  if (!name || !category) {
-    throw new Error("Missing required fields.");
-  }
-
-  if (!thumbnailFile || thumbnailFile.size === 0) {
-    throw new Error("You must provide an image.");
+  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
+    throw new Error("Admin access only.");
   }
 
   const uuid = crypto.randomUUID();
+  const adminSupabase = createServiceClient();
 
-  const { createClient } = await import("@supabase/supabase-js");
-  const adminSupabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const thumbExt = thumbnailFileName.split(".").pop();
+  const thumbPath = `bg-thumbnails/${uuid}-thumb.${thumbExt}`;
 
-  // Upload Thumbnail (Public bucket)
-  let thumbnailUrl = null;
-  if (thumbnailFile && thumbnailFile.size > 0) {
-    const thumbExt = thumbnailFile.name.split(".").pop();
-    const thumbPath = `bg-thumbnails/${uuid}-thumb.${thumbExt}`;
+  const { data: thumbData, error: thumbError } = await adminSupabase.storage
+    .from("prettyshot")
+    .createSignedUploadUrl(thumbPath);
 
-    const { error: thumbError } = await adminSupabase.storage
-      .from("prettyshot")
-      .upload(thumbPath, thumbnailFile, { upsert: false });
+  if (thumbError || !thumbData) throw new Error("Thumb URL: " + thumbError?.message);
 
-    if (thumbError)
-      throw new Error("Failed to upload thumbnail: " + thumbError.message);
+  const assetExt = assetFileName.split(".").pop();
+  const assetPathName = `${uuid}-asset.${assetExt}`;
+  const assetBucket = isFree ? "prettyshot" : "premium-assets";
+  const assetPath = isFree ? `backgrounds/${assetPathName}` : assetPathName;
 
-    const { data: thumbPublicData } = adminSupabase.storage
-      .from("prettyshot")
-      .getPublicUrl(thumbPath);
-    thumbnailUrl = thumbPublicData.publicUrl;
+  const { data: assetData, error: assetError } = await adminSupabase.storage
+    .from(assetBucket)
+    .createSignedUploadUrl(assetPath);
+
+  if (assetError || !assetData) throw new Error("Asset URL: " + assetError?.message);
+
+  return {
+    uuid,
+    thumbUploadToken: thumbData.token,
+    thumbPath,
+    assetUploadToken: assetData.token,
+    assetPath,
+    assetBucket
+  };
+}
+
+export async function saveBackgroundMetadata(
+  id: string,
+  name: string,
+  category: "mesh" | "image",
+  isFree: boolean,
+  thumbPath: string,
+  assetPath: string,
+  assetBucket: string
+) {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { ADMIN_EMAILS } = await import("@/config");
+  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
+    throw new Error("Admin access only.");
   }
 
-  // Upload Asset if provided
-  let storagePath = null;
-  if (assetFile && assetFile.size > 0) {
-    const assetExt = assetFile.name.split(".").pop();
-    const fileName = `${uuid}-asset.${assetExt}`;
+  const adminSupabase = createServiceClient();
 
-    const bucket = isFree ? "prettyshot" : "premium-assets";
-    const path = isFree ? `backgrounds/${fileName}` : fileName;
+  const { data: thumbPublicData } = adminSupabase.storage
+    .from("prettyshot")
+    .getPublicUrl(thumbPath);
+  const thumbnailUrl = thumbPublicData.publicUrl;
 
-    const { error: assetError } = await adminSupabase.storage
-      .from(bucket)
-      .upload(path, assetFile, { upsert: false });
-
-    if (assetError)
-      throw new Error("Failed to upload asset: " + assetError.message);
-
-    if (isFree){
-      const { data: publicData } = adminSupabase.storage
-        .from("prettyshot")
-        .getPublicUrl(path);
-      storagePath = publicData.publicUrl;
-    } else{
-      storagePath = path;
-    }
+  let storagePath = assetPath;
+  if (isFree) {
+    const { data: publicData } = adminSupabase.storage
+      .from("prettyshot")
+      .getPublicUrl(assetPath);
+    storagePath = publicData.publicUrl;
   }
 
-  // Insert into Database
-  const { error: insertError } = await adminSupabase
+  const { error } = await adminSupabase
     .from("backgrounds")
     .insert({
-      id: uuid,
+      id,
       name,
       category,
       thumbnail_url: thumbnailUrl,
@@ -198,9 +191,7 @@ export async function uploadBackground(formData: FormData) {
       is_free: isFree,
     });
 
-  if (insertError)
-    throw new Error("Failed to insert into database: " + insertError.message);
-
+  if (error) throw new Error("Failed to insert into database: " + error.message);
   return { success: true };
 }
 
