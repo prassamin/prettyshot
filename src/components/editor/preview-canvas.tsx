@@ -2,13 +2,12 @@
 
 import { useRef, useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { DeviceFrameWrapper } from './frames';
+import { DeviceFrameWrapper } from "./frames";
 import { useEditorStore } from "@/stores/editor-store";
 import { useAppStore } from "@/stores/app-store";
 import { SHADOW_PRESETS } from "@/lib/presets";
 import { UploadZone } from "./upload-zone";
 import { isPro } from "@/lib/utils";
-
 
 /** Generate a tileable noise texture as a base64 PNG data URL */
 function generateNoiseTexture(size = 150): string {
@@ -77,7 +76,7 @@ export function PreviewCanvas() {
     }
     if (deviceFrame === "chrome") {
       // Tab bar (3.0em) + Address bar (3.0em) = 6.0em
-      return 1 / (1 / imageAspectRatio + 0.060);
+      return 1 / (1 / imageAspectRatio + 0.06);
     }
     if (deviceFrame === "minimal") {
       // Top bar (2.4em)
@@ -107,14 +106,17 @@ export function PreviewCanvas() {
         const width = entry.contentRect.width;
         // Base width of 1000px = scale 1
         const scale = width / 1000;
-        
+
         // Set variables on captureRef so siblings (like watermark) can use them
         if (captureRef.current) {
-          captureRef.current.style.setProperty("--frame-scale", scale.toString());
+          captureRef.current.style.setProperty(
+            "--frame-scale",
+            scale.toString(),
+          );
         }
-        
+
         // Set fontSize on the frame itself so em units scale relative to frame width
-        entry.target.style.fontSize = `${10 * scale}px`;
+        (entry.target as HTMLElement).style.fontSize = `${10 * scale}px`;
       }
     });
     observer.observe(frameRef.current);
@@ -208,12 +210,16 @@ export function PreviewCanvas() {
             maxHeight: "100%",
             flexShrink: 1,
             display: "flex",
-            ...(image && frameAspectRatio ? { aspectRatio: String(frameAspectRatio) } : {}),
-            ...(!image ? {
-              minHeight: customAspectRatio ? "0" : "30vh",
-              height: customAspectRatio ? "100%" : "auto",
-              alignSelf: "stretch",
-            } : {}),
+            ...(image && frameAspectRatio
+              ? { aspectRatio: String(frameAspectRatio) }
+              : {}),
+            ...(!image
+              ? {
+                  minHeight: customAspectRatio ? "0" : "30vh",
+                  height: customAspectRatio ? "100%" : "auto",
+                  alignSelf: "stretch",
+                }
+              : {}),
             ...(hasPerspective
               ? {
                   transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`,
@@ -233,19 +239,30 @@ export function PreviewCanvas() {
                 width: "100%",
                 height: "100%",
                 borderRadius: `calc(${borderRadius}px * var(--frame-scale, 1))`,
-                border: borderWidth > 0 ? `calc(${borderWidth}px * var(--frame-scale, 1)) solid ${borderColor}` : undefined,
+                border:
+                  borderWidth > 0
+                    ? `calc(${borderWidth}px * var(--frame-scale, 1)) solid ${borderColor}`
+                    : undefined,
                 boxShadow: shadow,
               }}
             >
               <img
                 src={image}
                 alt="Screenshot"
-                onLoad={(e) => setImageAspectRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
+                onLoad={(e) =>
+                  setImageAspectRatio(
+                    e.currentTarget.naturalWidth /
+                      e.currentTarget.naturalHeight,
+                  )
+                }
                 style={{
                   display: "block",
                   width: "100%",
                   height: "100%",
-                  objectFit: (deviceFrame === "iphone" || deviceFrame === "tablet") ? "cover" : "contain",
+                  objectFit:
+                    deviceFrame === "iphone" || deviceFrame === "tablet"
+                      ? "cover"
+                      : "contain",
                 }}
                 draggable={false}
               />
