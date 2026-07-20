@@ -50,6 +50,7 @@ export function BackgroundControl() {
     setBgMesh,
     setBgSolid,
     setBgImage,
+    setBgPremiumId,
     noiseOpacity,
     setNoiseOpacity,
   } = useEditorStore();
@@ -105,6 +106,7 @@ export function BackgroundControl() {
     // We can just construct the URL instantly and save a server round-trip.
     if (bg.is_free && bg.storage_path) {
       const publicUrl = getPublicUrl(bg.storage_path);
+      setBgPremiumId(bg.id);
       if (bg.category === "mesh") setBgMesh(publicUrl);
       else if (bg.category === "image") {
         setBgImage(publicUrl);
@@ -119,6 +121,7 @@ export function BackgroundControl() {
     // If we have a cached URL and it hasn't expired yet (adding a 5s safety buffer)
     if (cached && cached.expiresAt && cached.expiresAt > now) {
       if (cached.url) {
+        setBgPremiumId(bg.id);
         if (bg.category === "mesh") setBgMesh(cached.url);
         else if (bg.category === "image") {
           setBgImage(cached.url);
@@ -137,6 +140,7 @@ export function BackgroundControl() {
           url: asset.url,
           expiresAt: Date.now() + 55 * 1000,
         };
+        setBgPremiumId(bg.id);
         if (bg.category === "mesh") setBgMesh(asset.url);
         else if (bg.category === "image") {
           setBgImage(asset.url);
@@ -159,6 +163,7 @@ export function BackgroundControl() {
       reader.onload = () => {
         if (typeof reader.result === "string") {
           setBgImage(reader.result);
+          setBgPremiumId(null);
           setBgType("custom");
           
           // Immediately show the newly uploaded image in the list
@@ -251,7 +256,10 @@ export function BackgroundControl() {
           {GRADIENT_PRESETS.map((preset) => (
             <button
               key={preset.name}
-              onClick={() => setBgGradient(preset.className)}
+              onClick={() => {
+                setBgGradient(preset.className);
+                setBgPremiumId(null);
+              }}
               className="group relative shrink-0"
               title={preset.name}
             >
@@ -351,7 +359,10 @@ export function BackgroundControl() {
             {SOLID_COLOR_PRESETS.map((color) => (
               <button
                 key={color}
-                onClick={() => setBgSolid(color)}
+                onClick={() => {
+                  setBgSolid(color);
+                  setBgPremiumId(null);
+                }}
                 className="group relative shrink-0"
               >
                 {bgSolid === color && (
@@ -368,13 +379,19 @@ export function BackgroundControl() {
             <input
               type="color"
               value={bgSolid}
-              onChange={(e) => setBgSolid(e.target.value)}
+              onChange={(e) => {
+                setBgSolid(e.target.value);
+                setBgPremiumId(null);
+              }}
               className="size-8 cursor-pointer rounded-lg border-0 bg-transparent"
             />
             <input
               type="text"
               value={bgSolid}
-              onChange={(e) => setBgSolid(e.target.value)}
+              onChange={(e) => {
+                setBgSolid(e.target.value);
+                setBgPremiumId(null);
+              }}
               className="flex-1 rounded-lg bg-zinc-100/80 px-3 py-1.5 text-xs font-mono text-zinc-600 outline-none focus:ring-2 focus:ring-orange-300"
             />
           </div>
@@ -438,7 +455,10 @@ export function BackgroundControl() {
                 {customUploads.map((url) => (
                   <button
                     key={url}
-                    onClick={() => setBgImage(url)}
+                    onClick={() => {
+                      setBgImage(url);
+                      setBgPremiumId(null);
+                    }}
                     className="group relative shrink-0"
                   >
                     {bgImage === url && (

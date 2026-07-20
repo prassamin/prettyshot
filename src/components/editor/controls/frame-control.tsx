@@ -3,7 +3,7 @@
 import { useEditorStore } from "@/stores/editor-store";
 import { useAppStore } from "@/stores/app-store";
 import { useRouter } from "@/hooks/use-router";
-import { Laptop, Monitor, AppWindow, Square } from "lucide-react";
+import { Laptop, Monitor, AppWindow, Square, PanelLeft, Smartphone, Globe, MoreHorizontal, Tablet } from "lucide-react";
 import { Button } from "@heroui/react";
 import { isPro } from "@/lib/utils";
 import { motion, LayoutGroup } from "framer-motion";
@@ -11,12 +11,12 @@ import { useId } from "react";
 
 export function FrameControl() {
   const uid = useId();
-  const { deviceFrame, setDeviceFrame } = useEditorStore();
+  const { deviceFrame, setDeviceFrame, browserUrl, setBrowserUrl, frameTheme, setFrameTheme } = useEditorStore();
   const { user } = useAppStore();
   const pro = isPro(user);
   const router = useRouter();
 
-  const handleSetFrame = (frame: "none" | "macos" | "windows" | "glass") => {
+  const handleSetFrame = (frame: "none" | "macos" | "windows" | "glass" | "arc" | "chrome" | "iphone" | "tablet" | "minimal") => {
     if (!pro.isActive && frame !== "none") {
       router.push("/login", { auth: true, next: "/checkout" });
       return;
@@ -28,7 +28,12 @@ export function FrameControl() {
     { id: "none", label: "None", icon: <Square className="size-4" /> },
     { id: "macos", label: "macOS", icon: <Laptop className="size-4" /> },
     { id: "windows", label: "Windows", icon: <Monitor className="size-4" /> },
+    { id: "chrome", label: "Chrome", icon: <Globe className="size-4" /> },
+    { id: "arc", label: "Arc", icon: <PanelLeft className="size-4" /> },
+    { id: "iphone", label: "iPhone", icon: <Smartphone className="size-4" /> },
+    { id: "tablet", label: "Tablet", icon: <Tablet className="size-4" /> },
     { id: "glass", label: "Glass", icon: <AppWindow className="size-4" /> },
+    { id: "minimal", label: "Minimal", icon: <MoreHorizontal className="size-4" /> },
   ] as const;
 
   return (
@@ -73,6 +78,49 @@ export function FrameControl() {
           })}
         </div>
       </LayoutGroup>
+      
+      {/* Browser URL Input */}
+      {["arc", "chrome"].includes(deviceFrame) && (
+        <div className="space-y-2 pt-2 border-t border-zinc-100">
+          <label className="text-xs font-semibold text-zinc-500">Browser URL</label>
+          <input
+            type="text"
+            value={browserUrl}
+            onChange={(e) => setBrowserUrl(e.target.value)}
+            placeholder="example.com"
+            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+          />
+        </div>
+      )}
+
+      {/* Theme Toggle */}
+      {deviceFrame !== "none" && (
+        <div className="space-y-2 pt-2 border-t border-zinc-100">
+          <label className="text-xs font-semibold text-zinc-500">Frame Theme</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFrameTheme("light")}
+              className={`flex-1 rounded-lg border py-2 text-xs font-bold transition-all ${
+                frameTheme === "light"
+                  ? "border-orange-500 bg-orange-50 text-orange-700"
+                  : "border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50"
+              }`}
+            >
+              Light
+            </button>
+            <button
+              onClick={() => setFrameTheme("dark")}
+              className={`flex-1 rounded-lg border py-2 text-xs font-bold transition-all ${
+                frameTheme === "dark"
+                  ? "border-orange-500 bg-orange-50 text-orange-700"
+                  : "border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50"
+              }`}
+            >
+              Dark
+            </button>
+          </div>
+        </div>
+      )}
       
       {!pro.isActive && (
         <div className="rounded-xl border border-rose-200/50 bg-linear-to-br from-orange-50 to-rose-50 p-4">

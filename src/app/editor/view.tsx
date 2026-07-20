@@ -16,6 +16,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "@/hooks/use-router";
 import { useEditorStore } from "@/stores/editor-store";
 import { nanoid } from 'nanoid'
+import { getPremiumAsset, getPremiumAssetByPath } from "@/app/actions/backgrounds";
 
 const sectionContent: Record<string, React.ReactNode> = {
   background: <BackgroundControl />,
@@ -54,13 +55,50 @@ export function EditorView({ initialConfig, serverId }: { initialConfig?: any, s
       router.replace(`/editor?id=${newId}`);
     } else {
       // Existing design loading
-      const currentId = useEditorStore.getState().designId;
+      const store = useEditorStore.getState();
+      const currentId = store.designId;
       if (currentId !== serverId) {
         if (initialConfig) {
           useEditorStore.setState(initialConfig);
         } else {
           // If no initialConfig was found but an ID was provided, it's invalid. Reset.
           router.replace("/editor");
+          return;
+        }
+      }
+
+      // ALWAYS refresh the premium background on mount to ensure we have a fresh signed URL
+      // This handles both fresh loads from DB and page refreshes (where state comes from localStorage)
+      const currentState = useEditorStore.getState();
+      if (currentState.bgPremiumId) {
+        getPremiumAsset(currentState.bgPremiumId).then((asset) => {
+          if (asset && asset.url) {
+            const freshStore = useEditorStore.getState();
+            if (freshStore.bgType === "mesh") {
+              freshStore.setBgMesh(asset.url);
+            } else if (freshStore.bgType === "image") {
+              freshStore.setBgImage(asset.url);
+            }
+          }
+        }).catch(console.error);
+      } else {
+        // Fallback for older saved designs before bgPremiumId existed
+        const oldUrl = currentState.bgType === "mesh" ? currentState.bgMesh : currentState.bgType === "image" ? currentState.bgImage : null;
+        if (oldUrl && oldUrl.includes("/object/sign/premium-assets/")) {
+          const match = oldUrl.match(/\/object\/sign\/premium-assets\/([^?]+)/);
+          if (match && match[1]) {
+            const storagePath = decodeURIComponent(match[1]);
+            getPremiumAssetByPath(storagePath).then((asset) => {
+              if (asset && asset.url) {
+                const freshStore = useEditorStore.getState();
+                if (freshStore.bgType === "mesh") {
+                  freshStore.setBgMesh(asset.url);
+                } else if (freshStore.bgType === "image") {
+                  freshStore.setBgImage(asset.url);
+                }
+              }
+            }).catch(console.error);
+          }
         }
       }
     }
@@ -83,7 +121,7 @@ export function EditorView({ initialConfig, serverId }: { initialConfig?: any, s
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full h-[45vh] lg:h-full lg:w-[400px] shrink-0 border-t lg:border-t-0 lg:border-l border-zinc-200/60 bg-white/80 backdrop-blur-xl z-10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] lg:shadow-none"
+          className="w-full h-[45vh] lg:h-full lg:w-100 shrink-0 border-t lg:border-t-0 lg:border-l border-zinc-200/60 bg-white/80 backdrop-blur-xl z-10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] lg:shadow-none"
         >
           <ControlsSidebar sectionContent={sectionContent} />
         </motion.aside>

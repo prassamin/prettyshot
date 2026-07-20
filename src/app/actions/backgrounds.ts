@@ -104,6 +104,21 @@ export async function getPremiumAsset(id: string) {
   return { url: data.signedUrl };
 }
 
+export async function getPremiumAssetByPath(storagePath: string) {
+  const supabase = await createServerClient();
+  const { data: bg } = await supabase
+    .from("backgrounds")
+    .select("id")
+    .eq("storage_path", storagePath)
+    .single();
+
+  if (!bg) {
+    throw new Error("Background not found.");
+  }
+
+  return getPremiumAsset(bg.id);
+}
+
 export async function getUploadUrls(
   assetFileName: string,
   thumbnailFileName: string,
