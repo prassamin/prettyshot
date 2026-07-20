@@ -447,25 +447,16 @@ export function Hero() {
             </Button>
           </motion.div>
 
-          {/* <motion.div
+          <motion.div
             variants={fadeUp(0.9)}
             initial="hidden"
             animate="visible"
             className="mt-8 flex justify-center sm:mt-10"
           >
-            <a
-              href="https://www.producthunt.com/products/prettyshot-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-prettyshot-2"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img
-                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1107377&theme=light&t=1774521643193"
-                alt="PrettyShot - Every screenshot deserves to be remembered | Product Hunt"
-                width={250}
-                height={54}
-              />
+            <a href="https://startupbase.io/products/prettyshot?utm_source=startupbase&utm_medium=badge&utm_campaign=launch-badge-neutral" target="_blank" rel="noopener noreferrer">
+              <img src="https://statics.startupbase.io/site/badges/launched-on-sb-neutral.svg" alt="Launched on StartupBase" height="55" style={{ height: "55px", width: "auto" }} />
             </a>
-          </motion.div> */}
+          </motion.div>
 
           {/* Feature pills */}
           <motion.div
