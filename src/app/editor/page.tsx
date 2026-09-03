@@ -1,6 +1,10 @@
-import { EditorView } from "./view";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
 import { metatag } from "@/lib/metatag";
+import { LOCAL_DESIGNS_COOKIE } from "@/editor/lib/local-design-storage";
 import { createServerClient } from "@/lib/supabase/server";
+import { isPro } from "@/lib/utils";
 
 export const generateMetadata = () => {
   return metatag({
@@ -10,35 +14,41 @@ export const generateMetadata = () => {
   });
 };
 
-import { Suspense } from "react";
+/** Parse the recent local-designs cookie into an ordered id list. */
+function readLocalDesignIds(raw: string | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(decodeURIComponent(raw));
+    return Array.isArray(parsed)
+      ? parsed.filter((x): x is string => typeof x === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
 
-export default async function EditorPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+export default async function EditorEntryPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const searchParams = await props.searchParams;
   const id = searchParams.id as string | undefined;
 
-  let initialConfig = null;
-
+  // A design id in the query string (legacy `?id=`) becomes the canonical path.
   if (id) {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      const { data } = await supabase
-        .from("designs")
-        .select("config")
-        .eq("id", id)
-        .eq("user_id", user.id)
-        .single();
-      
-      if (data?.config) {
-        initialConfig = data.config;
-      }
-    }
+    redirect(`/editor/${id}`);
   }
 
-  return (
-    <Suspense fallback={<div className="flex h-dvh bg-zinc-50 items-center justify-center">Loading editor...</div>}>
-      <EditorView initialConfig={initialConfig} serverId={id} />
-    </Suspense>
+  // If this device has an active local-only design, route to it so the user
+  // can continue their work (and if they are logged in as Pro, it will seamlessly
+  // migrate and sync to their cloud account).
+  const cookieStore = await cookies();
+  const localIds = readLocalDesignIds(
+    cookieStore.get(LOCAL_DESIGNS_COOKIE)?.value,
   );
+  const lastId = localIds[0];
+  if (lastId) {
+    redirect(`/editor/${lastId}`);
+  }
+
+  redirect(`/editor/${crypto.randomUUID()}`);
 }
