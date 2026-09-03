@@ -1,0 +1,1 @@
+export const DEFAULT_CLIP_DURATION_MS = 1000;
