@@ -40,4 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-supabase/.temp/linked-project.json
+supabase/.temp
+
+.playwright-mcp
+
+recover.js
+roadmap_note.md

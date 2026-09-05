@@ -1,131 +1,328 @@
 "use server";
 
 import { createServerClient, createServiceClient } from "@/lib/supabase/server";
+import {
+  AuthError,
+  ForbiddenError,
+  ServerError,
+} from "@/lib/errors";
+import {
+  cloudinary,
+  createUploadSignature,
+  getCloudinaryThumbnailUrl,
+  updateCloudinaryAssetContext,
+  deleteCloudinaryAsset,
+  type CloudinaryUploadSignature,
+  type CloudinaryAssetType,
+} from "@/lib/cloudinary";
+import { CloudinaryResponse } from "@/types/cloudinary";
 
 export type Background = {
   id: string;
   category: "mesh" | "image";
   name: string;
-  thumbnail_url: string | null;
-  storage_path: string | null;
+  thumbnail: string;
+  url: string | null;
   is_free: boolean;
 };
-
-export async function getBackgrounds(): Promise<Background[]> {
-  const supabase = await createServerClient();
-
-  const { data, error } = await supabase
-    .from("backgrounds")
-    .select("*")
-    .order("is_free", { ascending: false })
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Failed to fetch premium backgrounds:", error);
-    return [];
-  }
-
-  return data as Background[];
-}
 
 export type PremiumAssetResponse = {
   url?: string;
   cssValue?: string;
 };
 
-export async function getPremiumAsset(id: string) {
-  const supabase = await createServerClient();
-  const { data: bg } = await supabase
-    .from("backgrounds")
-    .select("*")
-    .eq("id", id)
-    .single();
+/**
+ * Fetches all backgrounds directly from Cloudinary using contextual metadata.
+ * Returns direct CDN URLs for free assets and thumbnails.
+ */
+export async function getBackgrounds(): Promise<Background[]> {
+  try {
+    const [freeResult, premiumUploadResult, premiumAuthResult] =
+      await Promise.all([
+        cloudinary.api
+          .resources({
+            type: "upload",
+            resource_type: "image",
+            prefix: "prettyshot/backgrounds/",
+            context: true,
+            max_results: 500,
+          })
+          .catch((err) => {
+            console.warn("Cloudinary free backgrounds fetch error:", err);
+            return { resources: [] };
+          }) as unknown as CloudinaryResponse,
+        cloudinary.api
+          .resources({
+            type: "upload",
+            resource_type: "image",
+            prefix: "prettyshot/premium-backgrounds/",
+            context: true,
+            max_results: 500,
+          })
+          .catch((err) => {
+            console.warn(
+              "Cloudinary premium upload backgrounds fetch error:",
+              err,
+            );
+            return { resources: [] };
+          }) as unknown as CloudinaryResponse,
+        cloudinary.api
+          .resources({
+            type: "authenticated",
+            resource_type: "image",
+            prefix: "prettyshot/premium-backgrounds/",
+            context: true,
+            max_results: 500,
+          })
+          .catch((err) => {
+            console.warn(
+              "Cloudinary premium auth backgrounds fetch error:",
+              err,
+            );
+            return { resources: [] };
+          }) as unknown as CloudinaryResponse,
+      ]);
 
-  if (!bg) return null;
+    const resourceMap = new Map<string, any>();
 
-  // If it's a free background, it is stored in the public bucket
-  if (bg.is_free && bg.storage_path) {
-    const { createClient } = await import("@supabase/supabase-js");
-    const adminSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-    const { data: publicData } = adminSupabase.storage
-      .from("prettyshot")
-      .getPublicUrl(bg.storage_path);
-    return { url: publicData.publicUrl };
+    for (const r of freeResult.resources || []) {
+      resourceMap.set(r.public_id, { ...r, _isFree: true });
+    }
+    for (const r of premiumUploadResult.resources || []) {
+      resourceMap.set(r.public_id, { ...r, _isFree: false });
+    }
+    for (const r of premiumAuthResult.resources || []) {
+      if (!resourceMap.has(r.public_id)) {
+        resourceMap.set(r.public_id, { ...r, _isFree: false });
+      }
+    }
+
+    const allResources = Array.from(resourceMap.values());
+
+    // Sort by free first, then by creation date
+    allResources.sort((a, b) => {
+      if (a._isFree !== b._isFree) return a._isFree ? -1 : 1;
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+
+    return allResources.map((r) => {
+      const custom = r.context?.custom || {};
+      const name =
+        custom.name ||
+        r.public_id.split("/").pop()?.replace(/[-_]/g, " ") ||
+        "Background";
+      const category = (custom.category as "mesh" | "image") || "mesh";
+      const isFree =
+        custom.is_free !== undefined
+          ? custom.is_free === "true" || custom.is_free === true
+          : r._isFree !== undefined
+            ? r._isFree
+            : !r.public_id.includes("premium");
+
+      const thumbUrl = getCloudinaryThumbnailUrl(r.public_id, {
+        width: 300,
+        height: 200,
+        crop: "fill",
+        type: "upload",
+      });
+
+      const directUrl =
+        r.secure_url || cloudinary.url(r.public_id, { secure: true });
+
+      return {
+        id: r.public_id,
+        name,
+        category,
+        is_free: isFree,
+        thumbnail: thumbUrl,
+        url: directUrl,
+      };
+    });
+  } catch (error) {
+    console.error("Failed to fetch backgrounds from Cloudinary:", error);
+    return [];
   }
+}
 
-  // Verify User and Pro Status
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !authUser) {
-    throw new Error("Unauthorized: Please log in.");
-  }
+/**
+ * Returns permanent access URL for a background asset.
+ */
+export async function getPremiumAsset(
+  publicId: string,
+): Promise<PremiumAssetResponse | null> {
+  if (!publicId) return null;
 
-  const isPro = authUser.user_metadata?.is_pro === true;
-  const trialEndsAt = authUser.user_metadata?.trial_ends_at
-    ? new Date(authUser.user_metadata.trial_ends_at)
-    : null;
-  const isTrialActive = trialEndsAt && trialEndsAt > new Date();
-
-  if (!isPro && !isTrialActive) {
-    throw new Error("Unauthorized: Premium backgrounds require a Pro license.");
-  }
-
-  // Fetch the metadata to get the storage path
-  const { data: bgData, error: bgError } = await supabase
-    .from("backgrounds")
-    .select("storage_path")
-    .eq("id", id)
-    .single();
-
-  if (bgError || !bgData) {
-    throw new Error("Background not found.");
-  }
-
-  if (!bgData.storage_path) {
-    throw new Error("Asset has no storage path.");
-  }
-
-  // Generate a signed URL valid for 60 seconds
-  const adminSupabase = createServiceClient();
-  const { data, error } = await adminSupabase.storage
-    .from("premium-assets")
-    .createSignedUrl(bgData.storage_path, 60); // 60 seconds expiry
-
-  if (error || !data) {
-    console.error("Failed to generate signed URL:", error);
-    throw new Error("Failed to generate signed URL.");
-  }
-
-  return { url: data.signedUrl };
+  if (publicId.startsWith("http")) return { url: publicId };
+  return { url: cloudinary.url(publicId, { secure: true }) };
 }
 
 export async function getPremiumAssetByPath(storagePath: string) {
-  const supabase = await createServerClient();
-  const { data: bg } = await supabase
-    .from("backgrounds")
-    .select("id")
-    .eq("storage_path", storagePath)
-    .single();
-
-  if (!bg) {
-    throw new Error("Background not found.");
-  }
-
-  return getPremiumAsset(bg.id);
+  return getPremiumAsset(storagePath);
 }
 
+/**
+ * Generates an upload signature with contextual metadata for direct browser-to-Cloudinary upload.
+ */
+export async function getCloudinaryUploadSignature(data: {
+  name: string;
+  category: "mesh" | "image";
+  isFree: boolean;
+}): Promise<CloudinaryUploadSignature> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { ADMIN_EMAILS } = await import("@/config");
+  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
+    throw new ForbiddenError();
+  }
+
+  const folder = data.isFree
+    ? "prettyshot/backgrounds"
+    : "prettyshot/premium-backgrounds";
+  const type: CloudinaryAssetType = "upload";
+  const context = `name=${data.name}|category=${data.category}|is_free=${data.isFree}`;
+
+  return createUploadSignature(folder, type, context);
+}
+
+/**
+ * Updates asset metadata stored in Cloudinary context.
+ */
+export async function updateBackground(
+  publicId: string,
+  data: { name: string; category: string; is_free: boolean },
+) {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { ADMIN_EMAILS } = await import("@/config");
+  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
+    throw new ForbiddenError();
+  }
+
+  const type = publicId.includes("premium") ? "authenticated" : "upload";
+
+  try {
+    await updateCloudinaryAssetContext(
+      publicId,
+      {
+        name: data.name,
+        category: data.category,
+        is_free: String(data.is_free),
+      },
+      type,
+    );
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to update background context:", err);
+    throw new ServerError(
+      "Failed to update background metadata: " + err.message,
+    );
+  }
+}
+
+/**
+ * Deletes an asset permanently from Cloudinary.
+ */
+export async function deleteBackground(publicId: string) {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { ADMIN_EMAILS } = await import("@/config");
+  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
+    throw new ForbiddenError();
+  }
+
+  const type = publicId.includes("premium") ? "authenticated" : "upload";
+
+  try {
+    await deleteCloudinaryAsset(publicId, type);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to delete background from Cloudinary:", err);
+    throw new ServerError("Failed to delete background: " + err.message);
+  }
+}
+
+/**
+ * Fetches user's uploaded custom background images from Cloudinary.
+ */
+export async function getUserBackgroundImages(): Promise<
+  Array<Omit<Background, "is_free" | "category" | "name">>
+> {
+  try {
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user?.id) return [];
+
+    const result: CloudinaryResponse = await cloudinary.api.resources({
+      type: "upload",
+      resource_type: "image",
+      prefix: `prettyshot/users/${user.id}/bg/`,
+      max_results: 30,
+      sort_by: ["created_at", "desc"],
+    });
+
+    return (result.resources || []).map((r) => {
+      const thumbUrl = getCloudinaryThumbnailUrl(r.public_id, {
+        width: 300,
+        height: 200,
+        crop: "fill",
+        type: "upload",
+      });
+      return {
+        id: r.public_id,
+        url: r.secure_url,
+        thumbnail: thumbUrl,
+      };
+    });
+  } catch (error) {
+    console.error("Failed to fetch user backgrounds from Cloudinary:", error);
+    return [];
+  }
+}
+
+/**
+ * Generates an upload signature for a user to directly upload images to their Cloudinary folder.
+ * Bypasses Next.js server payload limit and keeps API secret protected.
+ */
+export async function getUserUploadSignature(
+  clientTimestamp?: number,
+): Promise<CloudinaryUploadSignature> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    throw new AuthError("You must be logged in to upload images.");
+  }
+
+  const folder = `prettyshot/users/${user.id}/bg`;
+  return createUploadSignature(folder, "upload", undefined, clientTimestamp);
+}
+
+/**
+ * Returns signed upload URLs for a new background asset + thumbnail.
+ * @adminOnly
+ */
 export async function getUploadUrls(
   assetFileName: string,
   thumbnailFileName: string,
-  isFree: boolean
+  isFree: boolean,
 ) {
   const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { ADMIN_EMAILS } = await import("@/config");
   if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
     throw new Error("Admin access only.");
@@ -141,7 +338,8 @@ export async function getUploadUrls(
     .from("prettyshot")
     .createSignedUploadUrl(thumbPath);
 
-  if (thumbError || !thumbData) throw new Error("Thumb URL: " + thumbError?.message);
+  if (thumbError || !thumbData)
+    throw new Error("Thumb URL: " + thumbError?.message);
 
   const assetExt = assetFileName.split(".").pop();
   const assetPathName = `${uuid}-asset.${assetExt}`;
@@ -152,7 +350,8 @@ export async function getUploadUrls(
     .from(assetBucket)
     .createSignedUploadUrl(assetPath);
 
-  if (assetError || !assetData) throw new Error("Asset URL: " + assetError?.message);
+  if (assetError || !assetData)
+    throw new Error("Asset URL: " + assetError?.message);
 
   return {
     uuid,
@@ -160,10 +359,14 @@ export async function getUploadUrls(
     thumbPath,
     assetUploadToken: assetData.token,
     assetPath,
-    assetBucket
+    assetBucket,
   };
 }
 
+/**
+ * Persists the uploaded background row into Supabase.
+ * @adminOnly
+ */
 export async function saveBackgroundMetadata(
   id: string,
   name: string,
@@ -171,10 +374,11 @@ export async function saveBackgroundMetadata(
   isFree: boolean,
   thumbPath: string,
   assetPath: string,
-  assetBucket: string
 ) {
   const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { ADMIN_EMAILS } = await import("@/config");
   if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
     throw new Error("Admin access only.");
@@ -195,76 +399,16 @@ export async function saveBackgroundMetadata(
     storagePath = publicData.publicUrl;
   }
 
-  const { error } = await adminSupabase
-    .from("backgrounds")
-    .insert({
-      id,
-      name,
-      category,
-      thumbnail_url: thumbnailUrl,
-      storage_path: storagePath,
-      is_free: isFree,
-    });
+  const { error } = await adminSupabase.from("backgrounds").insert({
+    id,
+    name,
+    category,
+    thumbnail_url: thumbnailUrl,
+    storage_path: storagePath,
+    is_free: isFree,
+  });
 
-  if (error) throw new Error("Failed to insert into database: " + error.message);
-  return { success: true };
-}
-
-export async function updateBackground(id: string, data: { name: string; category: string; is_free: boolean }) {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const { ADMIN_EMAILS } = await import("@/config");
-  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) throw new Error("Unauthorized");
-
-  const adminSupabase = createServiceClient();
-  
-  // NOTE: Moving from free to premium (or vice-versa) would technically require moving the file between buckets.
-  // For simplicity, we just update the DB flags here. If the file is in public bucket but marked premium, 
-  // it'll still work (just won't be as secure).
-  
-  const { error } = await adminSupabase
-    .from("backgrounds")
-    .update({
-      name: data.name,
-      category: data.category,
-      is_free: data.is_free,
-    })
-    .eq("id", id);
-
-  if (error) throw new Error("Failed to update background: " + error.message);
-  return { success: true };
-}
-
-export async function deleteBackground(id: string) {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const { ADMIN_EMAILS } = await import("@/config");
-  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) throw new Error("Unauthorized");
-
-  const adminSupabase = createServiceClient();
-
-  // Get background to find storage paths
-  const { data: bg } = await adminSupabase.from("backgrounds").select("*").eq("id", id).single();
-  if (bg) {
-    // We try to delete the thumbnail from 'prettyshot'
-    if (bg.thumbnail_url) {
-      const thumbPath = bg.thumbnail_url.split('/public/prettyshot/')[1];
-      if (thumbPath) await adminSupabase.storage.from("prettyshot").remove([thumbPath]);
-    }
-
-    // Try to delete the asset
-    if (bg.storage_path) {
-      if (bg.is_free && bg.storage_path.includes('/public/prettyshot/')) {
-        const path = bg.storage_path.split('/public/prettyshot/')[1];
-        if (path) await adminSupabase.storage.from("prettyshot").remove([path]);
-      } else {
-        // It's in premium-assets
-        await adminSupabase.storage.from("premium-assets").remove([bg.storage_path]);
-      }
-    }
-  }
-
-  const { error } = await adminSupabase.from("backgrounds").delete().eq("id", id);
-  if (error) throw new Error("Failed to delete background: " + error.message);
+  if (error)
+    throw new Error("Failed to insert into database: " + error.message);
   return { success: true };
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { AppProgressProvider as ProgressProvider } from "@bprogress/next";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
 import { AppStoreContext, createAppStore, User } from "@/stores/app-store";
+import { ConfirmProvider } from "@/components/confirm-provider";
+import { Toast } from "@heroui/react";
 
 export function Providers({
   children,
@@ -13,7 +14,6 @@ export function Providers({
   children: React.ReactNode;
   user?: User;
 }) {
-  const [queryClient] = useState(() => new QueryClient());
   const storeRef = useRef<ReturnType<typeof createAppStore>>(undefined);
 
   if (!storeRef.current) {
@@ -24,22 +24,26 @@ export function Providers({
     if (storeRef.current) {
       storeRef.current.getState().setOrigin(window.location.origin);
       storeRef.current.getState().setUrl(new URL(window.location.href));
+      if (user) {
+        storeRef.current.getState().setUser(user);
+      }
     }
-  }, []);
+  }, [user]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppStoreContext.Provider value={storeRef.current}>
-        <ProgressProvider
-          height="3px"
-          color="var(--accent)"
-          options={{ showSpinner: false }}
-          shallowRouting
-        >
+    <AppStoreContext.Provider value={storeRef.current}>
+      <ProgressProvider
+        height="3px"
+        color="var(--primary)"
+        options={{ showSpinner: false }}
+        shallowRouting
+      >
+        <ConfirmProvider>
           {children}
+          <Toast.Provider placement="top" />
           <VercelAnalytics />
-        </ProgressProvider>
-      </AppStoreContext.Provider>
-    </QueryClientProvider>
+        </ConfirmProvider>
+      </ProgressProvider>
+    </AppStoreContext.Provider>
   );
 }

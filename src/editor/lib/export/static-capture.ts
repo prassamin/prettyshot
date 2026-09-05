@@ -213,3 +213,27 @@ export async function captureCanvasAsPngBlob(
     exportTarget.cleanup();
   }
 }
+
+export async function captureCanvasAsWebpBlob(
+  canvasId: string,
+  targetWidth = 1200,
+  quality = 0.85,
+  options: ExportCaptureOptions = {},
+): Promise<Blob> {
+  const pngBlob = await captureCanvasAsPngBlob(canvasId, targetWidth, options);
+  try {
+    const bitmap = await createImageBitmap(pngBlob);
+    const offscreen = document.createElement("canvas");
+    offscreen.width = bitmap.width;
+    offscreen.height = bitmap.height;
+    const ctx = offscreen.getContext("2d");
+    if (!ctx) return pngBlob;
+    ctx.drawImage(bitmap, 0, 0);
+    const webpBlob = await new Promise<Blob | null>((resolve) =>
+      offscreen.toBlob(resolve, "image/webp", quality),
+    );
+    return webpBlob || pngBlob;
+  } catch {
+    return pngBlob;
+  }
+}

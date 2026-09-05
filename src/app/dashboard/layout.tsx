@@ -29,12 +29,10 @@ export default function DashboardLayout({
     setIsSidebarOpen(false);
   }, [pathname]);
 
-  // Auto-collapse sidebar when entering admin routes, auto-expand when leaving
+  // Auto-collapse sidebar when entering admin routes
   useEffect(() => {
     if (isAdminRoute) {
       setIsCollapsed(true);
-    } else {
-      setIsCollapsed(false);
     }
   }, [isAdminRoute]);
 
@@ -49,14 +47,14 @@ export default function DashboardLayout({
 
   if (loading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <Loader2 className="size-8 animate-spin text-zinc-400" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 font-sans">
+    <div className="flex min-h-screen bg-background font-sans">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -64,7 +62,7 @@ export default function DashboardLayout({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-zinc-900/20 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-40 bg-overlay/70 backdrop-blur-sm md:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -93,17 +91,17 @@ export default function DashboardLayout({
         }`}
       >
         {/* Mobile Header (Hidden on Desktop) */}
-        <header className="md:hidden sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur-xl">
+        <header className="md:hidden sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-border/60 bg-surface/80 px-4 backdrop-blur-xl">
           <Button
             isIconOnly
             size="sm"
-            className="text-zinc-500"
+            className="text-muted-foreground"
             variant="ghost"
             onPress={() => setIsSidebarOpen(true)}
           >
             <Menu className="size-5" />
           </Button>
-          <span className="text-zinc-900 font-semibold">
+          <span className="text-foreground font-semibold">
             {navigation.find((n) => n.href === pathname)?.name || "Overview"}
           </span>
         </header>

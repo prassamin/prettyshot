@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/client";
+import { getDesignUploadSignature } from "@/app/actions/design-upload";
+import { MAX_FILE_SIZE } from "@/config";
 
 /**
  * Converts a base64 Data URL to a highly compressed WebP Data URL
@@ -54,83 +55,167 @@ export async function hashBlob(blob: Blob): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+const memoryUploadCache = new Map<string, string>();
+const inFlightUploads = new Map<string, Promise<string>>();
+const deletedOrPendingDeletion = new Set<string>();
+
 /**
- * Compresses an image to WebP, hashes it, and uploads it to Supabase if it doesn't exist.
- * Returns the public URL of the image.
+ * Compresses an image to WebP, hashes it, and uploads it to Cloudinary via a
+ * signed direct upload. Returns the public URL of the image.
+ *
+ * The hash doubles as the Cloudinary `public_id`, so re-uploading the same
+ * image is an idempotent overwrite — effectively deduplicated.
  */
 export async function uploadImageDeduplicated(
   dataUrl: string,
-  userId: string,
-  folder: "default" | "bg" = "default",
+  designId?: string,
 ): Promise<string> {
   // If it's already an uploaded URL, just return it
   if (dataUrl.startsWith("http")) return dataUrl;
 
-  // Compress to WebP
-  const webpDataUrl = await compressToWebP(dataUrl, 0.8);
-  const blob = dataURLtoBlob(webpDataUrl);
+  const cacheKey = designId ? `${designId}:${dataUrl}` : dataUrl;
+  const cached = memoryUploadCache.get(cacheKey) || memoryUploadCache.get(dataUrl);
+  if (cached) return cached;
 
-  // Hash it to generate a unique filename
-  const hash = await hashBlob(blob);
-  const fileName = `${hash}.webp`;
+  if (inFlightUploads.has(cacheKey)) {
+    return inFlightUploads.get(cacheKey)!;
+  }
 
-  // Construct the path: design-images/{userId}/[bg/]{fileName}
-  const subFolder = folder === "bg" ? "bg/" : "";
-  const filePath = `design-images/${userId}/${subFolder}${fileName}`;
+  const uploadPromise = (async () => {
+    // Compress to WebP
+    const webpDataUrl = await compressToWebP(dataUrl, 0.8);
+    const blob = dataURLtoBlob(webpDataUrl);
+    if (blob.size > MAX_FILE_SIZE) {
+      throw new Error("Image size exceeds the 10MB limit.");
+    }
 
-  const supabase = createClient();
-  const bucket = supabase.storage.from("prettyshot");
+    // Hash it to generate a unique public_id
+    const hash = await hashBlob(blob);
+    const hashKey = designId ? `${designId}:${hash}` : hash;
 
-  // Attempt upload. upsert: false ensures we don't overwrite if it exists.
-  const { error } = await bucket.upload(filePath, blob, {
-    contentType: "image/webp",
-    upsert: false,
+    const hashCached =
+      memoryUploadCache.get(hashKey) || memoryUploadCache.get(hash);
+    if (hashCached) {
+      memoryUploadCache.set(cacheKey, hashCached);
+      return hashCached;
+    }
+
+    if (inFlightUploads.has(hashKey)) {
+      return inFlightUploads.get(hashKey)!;
+    }
+
+    const publicId = hash;
+
+    // Get signed upload parameters from the server (folder is scoped to the user and design project)
+    const clientTimestamp = Math.floor(Date.now() / 1000);
+    const uploadParams = await getDesignUploadSignature(
+      clientTimestamp,
+      publicId,
+      designId,
+    );
+
+    // Direct upload to Cloudinary CDN
+    const uploadFormData = new FormData();
+    uploadFormData.append("file", blob);
+    uploadFormData.append("api_key", uploadParams.apiKey);
+    uploadFormData.append("timestamp", clientTimestamp.toString());
+    uploadFormData.append("signature", uploadParams.signature);
+    uploadFormData.append("folder", uploadParams.folder);
+    uploadFormData.append("public_id", publicId);
+    uploadFormData.append("overwrite", "true");
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${uploadParams.cloudName}/image/upload`,
+      {
+        method: "POST",
+        body: uploadFormData,
+      },
+    );
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      throw new Error(data.error?.message || "Cloudinary upload failed");
+    }
+
+    const secureUrl = data.secure_url as string;
+    memoryUploadCache.set(dataUrl, secureUrl);
+    memoryUploadCache.set(cacheKey, secureUrl);
+    memoryUploadCache.set(hash, secureUrl);
+    memoryUploadCache.set(hashKey, secureUrl);
+
+    return secureUrl;
+  })();
+
+  inFlightUploads.set(cacheKey, uploadPromise);
+  uploadPromise.finally(() => {
+    inFlightUploads.delete(cacheKey);
   });
 
-  if (
-    error &&
-    (error as any).statusCode !== "409" &&
-    !error.message.includes("Duplicate")
-  ) {
-    console.warn(
-      "Upload error (might be duplicate, proceeding anyway):",
-      error,
-    );
-  }
-
-  // Return Public URL
-  const { data } = bucket.getPublicUrl(filePath);
-  return data.publicUrl;
+  return uploadPromise;
 }
 
-export const getPublicUrl = (path: string, bucket: string = "prettyshot") => {
-  if (path && path.startsWith("http")) return path;
-  const supabase = createClient();
-  return supabase.storage
-    .from(bucket)
-    .getPublicUrl(path).data.publicUrl;
-};
-
 /**
- * Deletes an image from the Supabase bucket given its public URL
+ * Deletes an old user design asset from Cloudinary in the background.
  */
-export async function deleteImageByUrl(publicUrl: string, bucket: string = "prettyshot"): Promise<void> {
-  if (!publicUrl || !publicUrl.includes("supabase.co")) return;
+export async function deleteDesignAsset(urlOrPublicId: string): Promise<boolean> {
+  if (!urlOrPublicId) return false;
+  if (deletedOrPendingDeletion.has(urlOrPublicId)) return true;
+  deletedOrPendingDeletion.add(urlOrPublicId);
 
   try {
-    // The public URL format is typically: 
-    // https://[projectId].supabase.co/storage/v1/object/public/[bucket]/[filePath]
-    const urlParts = publicUrl.split(`/public/${bucket}/`);
-    if (urlParts.length !== 2) return;
-
-    const filePath = urlParts[1];
-    const supabase = createClient();
-    
-    const { error } = await supabase.storage.from(bucket).remove([filePath]);
-    if (error) {
-      console.error("Failed to delete old image:", error);
-    }
-  } catch (e) {
-    console.error("Error deleting image:", e);
+    const { deleteDesignAssetAction } = await import("@/app/actions/design-upload");
+    const res = await deleteDesignAssetAction(urlOrPublicId);
+    return res.success;
+  } catch (err) {
+    console.warn("Failed to delete design asset:", err);
+    return false;
   }
+}
+
+/**
+ * Replaces an existing screenshot/asset by uploading the new image and deleting the old
+ * Cloudinary asset concurrently in parallel.
+ *
+ * Guaranteed safe: If the new image has the same hash as the old asset, it will NOT delete it.
+ */
+export async function replaceImageDeduplicated(
+  newDataUrl: string,
+  oldUrlOrPublicId?: string | null,
+  designId?: string,
+): Promise<string> {
+  // If it's already an uploaded URL, return it
+  if (newDataUrl.startsWith("http")) return newDataUrl;
+
+  // 1. Check memory cache first
+  const cached = memoryUploadCache.get(newDataUrl);
+  if (cached && cached === oldUrlOrPublicId) {
+    return cached;
+  }
+
+  // 2. Compress & hash newDataUrl to know its public_id before doing anything
+  const webpDataUrl = await compressToWebP(newDataUrl, 0.8);
+  const blob = dataURLtoBlob(webpDataUrl);
+  const newHash = await hashBlob(blob);
+
+  // If the old asset contains the exact same hash, NEVER delete it!
+  const isSameAsset =
+    oldUrlOrPublicId &&
+    (oldUrlOrPublicId.includes(newHash) ||
+      memoryUploadCache.get(newHash) === oldUrlOrPublicId ||
+      cached === oldUrlOrPublicId);
+
+  const shouldDeleteOld =
+    !isSameAsset &&
+    oldUrlOrPublicId &&
+    typeof oldUrlOrPublicId === "string" &&
+    oldUrlOrPublicId.startsWith("http") &&
+    oldUrlOrPublicId.includes("cloudinary.com");
+
+  const uploadTask = uploadImageDeduplicated(newDataUrl, designId);
+  const deleteTask = shouldDeleteOld
+    ? deleteDesignAsset(oldUrlOrPublicId)
+    : Promise.resolve(true);
+
+  const [newUrl] = await Promise.all([uploadTask, deleteTask]);
+  return newUrl;
 }

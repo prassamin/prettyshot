@@ -17,7 +17,11 @@ const triggerAnchorDownload = (url: string, name: string) => {
 };
 
 export function findCanvasElement(canvasId: string): HTMLElement | null {
-  return document.querySelector<HTMLElement>(`[data-stage-id="${canvasId}"]`);
+  return (
+    document.querySelector<HTMLElement>(`[data-stage-id="${canvasId}"]`) ||
+    document.querySelector<HTMLElement>("[data-stage-id]") ||
+    document.querySelector<HTMLElement>("#canvas-stage")
+  );
 }
 
 export function getCanvasLayoutDims(node: HTMLElement): {

@@ -1,11 +1,13 @@
 "use server";
 
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient, createServiceClient } from "@/lib/supabase/server";
 
 export async function activateFreeTrial() {
   const supabase = await createServerClient();
-  
-  const { data: { user } } = await supabase.auth.getUser();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
@@ -29,7 +31,13 @@ export async function activateFreeTrial() {
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + 1);
 
-  const { error } = await supabase
+  // Use the stateless service-role client (no user JWT attached) so the
+  // `protect_profile_fields` trigger — which reverts trial_ends_at whenever
+  // auth.role() = 'authenticated' — does NOT undo this server-side write.
+  // (createServerClient attaches the user session, making Postgres treat the
+  // request as an authenticated client even though the key is the service role.)
+  const admin = createServiceClient();
+  const { error } = await admin
     .from("profiles")
     .update({ trial_ends_at: trialEndsAt.toISOString() })
     .eq("id", user.id);
