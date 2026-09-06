@@ -95,6 +95,7 @@ export function Faq() {
       id="faq"
       className="relative overflow-hidden bg-background py-24 sm:py-32"
     >
+      {/* ambient */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -bottom-40 left-1/2 h-105 w-250 -translate-x-1/2 rounded-full bg-primary/25 blur-[150px]" />
         <div className="absolute bottom-1/3 -right-40 size-150 rounded-full bg-primary/15 blur-[150px]" />

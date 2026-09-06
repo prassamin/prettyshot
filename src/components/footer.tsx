@@ -67,9 +67,9 @@ export function Footer() {
         {/* top warm wash behind the CTA band */}
         <div className="absolute -top-40 left-1/2 h-105 w-250 -translate-x-1/2 rounded-full bg-primary/25 blur-[150px]" />
         {/* left body glow */}
-        <div className="absolute top-1/3 -left-40 size-150 rounded-full bg-primary/15 blur-[150px]" />
+        <div className="absolute top-1/3 -left-40 size-150 rounded-full bg-primary/15 blur-[150px] [html:not([data-route='/'])_&]:hidden" />
         {/* bottom-right bloom */}
-        <div className="absolute -right-32 -bottom-48 size-160 rounded-full bg-primary/15 blur-[160px]" />
+        <div className="absolute -right-32 -bottom-48 size-160 rounded-full bg-primary/15 blur-[160px] [html:not([data-route='/'])_&]:hidden" />
       </div>
 
       <motion.div
@@ -80,7 +80,7 @@ export function Footer() {
         className="relative mx-auto max-w-6xl px-5 pt-20 sm:pt-24"
       >
         {/* ── Big brand CTA band ── */}
-        <div className="flex flex-col items-start justify-between gap-8 pb-16">
+        <div className="flex flex-col items-start justify-between gap-8 pb-16 [html:not([data-route='/'])_&]:hidden">
           <div>
             <h2 className="font-display max-w-2xl text-[clamp(2rem,5vw,3.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-foreground">
               Every screenshot deserves{" "}
@@ -198,7 +198,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="h-px w-full bg-muted-foreground/10"/>
+        <div className="h-px w-full bg-muted-foreground/10" />
 
         {/* ── Bottom bar ── */}
         <div className="flex flex-col items-center justify-between gap-4 py-4 sm:flex-row">

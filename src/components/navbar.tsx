@@ -28,21 +28,17 @@ import { APP_NAME, APP_GITHUB_URL } from "@/config";
 import { useRouter } from "@/hooks/use-router";
 import { useAppStore } from "@/stores/app-store";
 import { isPro } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
-const navLinks: { label: string; href: string }[] = [
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+const navLinks: {
+  label: string;
+  href: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}[] = [
+  { label: "Features", href: "#features", icon: LayoutGrid },
+  { label: "Pricing", href: "#pricing", icon: Tag },
+  { label: "FAQ", href: "#faq", icon: HelpCircle },
 ];
-
-const mobileLinkIcons: Record<
-  string,
-  React.ComponentType<{ className?: string; strokeWidth?: number }>
-> = {
-  "#features": LayoutGrid,
-  "#pricing": Tag,
-  "#faq": HelpCircle,
-};
 
 function SpotlightNav({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -93,6 +89,7 @@ function SpotlightNav({ children }: { children: React.ReactNode }) {
 }
 
 export function Navbar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -129,10 +126,7 @@ export function Navbar() {
   }, [mobileOpen]);
 
   return (
-    <header
-      ref={headerRef}
-      className="fixed top-0 right-0 left-0 z-50"
-    >
+    <header ref={headerRef} className="fixed top-0 right-0 left-0 z-50">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <motion.div
           initial={{ y: -30, opacity: 0, filter: "blur(10px)" }}
@@ -175,21 +169,24 @@ export function Navbar() {
 
               {/* Desktop nav */}
               <div className="hidden items-center gap-0.5 md:flex">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="group relative px-4 py-2"
-                  >
-                    <span className="relative z-10 text-sm font-medium text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
-                      {link.label}
-                    </span>
-                    {/* Hover pill bg */}
-                    <span className="absolute inset-0 scale-75 rounded-xl bg-foreground/6 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
-                    {/* Bottom indicator dot */}
-                    <span className="absolute bottom-0.5 left-1/2 size-1 -translate-x-1/2 scale-0 rounded-full bg-linear-to-r from-primary to-primary/60 transition-transform duration-300 group-hover:scale-100" />
-                  </Link>
-                ))}
+                {navLinks.map((link) => {
+                  if (pathname && pathname !== "/") return;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="group relative px-4 py-2"
+                    >
+                      <span className="relative z-10 text-sm font-medium text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
+                        {link.label}
+                      </span>
+                      {/* Hover pill bg */}
+                      <span className="absolute inset-0 scale-75 rounded-xl bg-foreground/6 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
+                      {/* Bottom indicator dot */}
+                      <span className="absolute bottom-0.5 left-1/2 size-1 -translate-x-1/2 scale-0 rounded-full bg-linear-to-r from-primary to-primary/60 transition-transform duration-300 group-hover:scale-100" />
+                    </Link>
+                  );
+                })}
 
                 {/* Separator */}
                 <div className="mx-2.5 h-5 w-px bg-linear-to-b from-transparent via-border to-transparent" />
@@ -440,7 +437,7 @@ export function Navbar() {
                       <span
                         className={`rounded-md px-2 py-0.5 text-[9px] font-bold tracking-widest ${
                           pro.type === "pro"
-                            ? "bg-success/15 text-success"
+                            ? "bg-success-soft text-success"
                             : pro.type === "trial"
                               ? "bg-accent-soft text-primary"
                               : "bg-border/50 text-muted-foreground"
@@ -462,7 +459,7 @@ export function Navbar() {
                     </p>
 
                     {navLinks.map((link, i) => {
-                      const Icon = mobileLinkIcons[link.href] ?? ChevronRight;
+                      const Icon = link.icon ?? ChevronRight;
                       return (
                         <motion.div
                           key={link.href}
