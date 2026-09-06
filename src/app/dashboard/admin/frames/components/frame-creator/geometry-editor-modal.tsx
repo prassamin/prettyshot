@@ -482,7 +482,10 @@ export function GeometryEditorModal({
                       )}
                       style={{
                         aspectRatio: localGeom.screen.aspectRatio,
-                        ...deviceFrameViewportClip(localGeom.screen, stageWidth),
+                        ...deviceFrameViewportClip(
+                          localGeom.screen,
+                          stageWidth,
+                        ),
                         transform: deviceFrameViewportTransform({
                           scale: localGeom.screen.scale ?? 1,
                           offsetX: localGeom.screen.offsetX ?? 0,
@@ -645,7 +648,7 @@ export function GeometryEditorModal({
                     label="Corner Radius"
                     value={localGeom.screen.borderRadius ?? 0}
                     min={0}
-                    max={60}
+                    max={120}
                     step={1}
                     onChange={(val) =>
                       patchScreen({ borderRadius: Math.round(val) })
