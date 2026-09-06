@@ -125,8 +125,6 @@ export default function LoginPageView() {
                     ))}
                   </ul>
                 </div>
-
-                {/* floating chip */}
               </div>
 
               {/* ── Right: auth panel ── */}

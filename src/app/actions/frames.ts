@@ -1,9 +1,6 @@
 "use server";
 
-import {
-  cloudinary,
-  deleteCloudinaryFolder,
-} from "@/lib/cloudinary";
+import { cloudinary, deleteCloudinaryFolder } from "@/lib/cloudinary";
 import { ForbiddenError } from "@/lib/errors";
 import { createServerClient } from "@/lib/supabase/server";
 import { unstable_cache } from "next/cache";
@@ -282,7 +279,38 @@ export const getFramesCatalog = unstable_cache(
 );
 
 /** Uncached catalog fetch — for the admin panel where instant freshness matters. */
-export const getFramesCatalogUncached = async () => readFramesCatalog();
+export const getFramesCatalogUncached = async () => {
+  // Admin route: always rescan Cloudinary so freshly uploaded frames appear
+  // immediately. KV is only trusted for rich metadata (names, geometry,
+  // colors, default variants, pro status), which we overlay onto the scan.
+  const scanned = await fetchCatalogUncached();
+  if (scanned.length === 0) return scanned;
+
+  const merged = await Promise.all(
+    scanned.map(async (cat) => {
+      const kvCat = await kv.get<KvCategory>(framesCategoryKey(cat.id));
+      if (kvCat) {
+        cat.label = kvCat.label;
+        cat.iconUrl = kvCat.iconUrl;
+      }
+      for (const frame of cat.frames) {
+        const kvFrame = await kv.get<FrameInfo>(framesFrameKey(frame.id));
+        if (kvFrame) {
+          frame.name = kvFrame.name;
+          frame.isFree = kvFrame.isFree;
+          frame.supportsOrientation = kvFrame.supportsOrientation ?? false;
+          frame.defaultVariant = kvFrame.defaultVariant;
+          frame.colors = kvFrame.colors ?? {};
+          frame.geometry = kvFrame.geometry ?? null;
+        }
+      }
+      return cat;
+    }),
+  );
+
+  await writeKvCatalog(merged);
+  return merged;
+};
 
 /* ── KV entity helpers ────────────────────────────────── */
 
@@ -301,7 +329,8 @@ async function readKvCatalog(): Promise<FrameCategoryInfo[] | null> {
     for (const catId of ids) {
       const cat = await kv.get<KvCategory>(framesCategoryKey(catId));
       if (!cat) continue;
-      const frameIds = (await kv.get<string[]>(framesCategoryFramesKey(catId))) ?? [];
+      const frameIds =
+        (await kv.get<string[]>(framesCategoryFramesKey(catId))) ?? [];
       const frames: FrameInfo[] = [];
       for (const frameId of frameIds) {
         const frame = await kv.get<FrameInfo>(framesFrameKey(frameId));
@@ -388,14 +417,15 @@ export async function refreshFramesCatalog(): Promise<FrameCategoryInfo[]> {
   await writeKvCatalog(catalog);
   return catalog;
 }
- 
+
 /** Directly removes a frame from its category's KV keys. */
 async function removeFrameFromKv(
   categoryId: string,
   frameId: string,
 ): Promise<void> {
   await kv.del(framesFrameKey(frameId));
-  const ids = (await kv.get<string[]>(framesCategoryFramesKey(categoryId))) ?? [];
+  const ids =
+    (await kv.get<string[]>(framesCategoryFramesKey(categoryId))) ?? [];
   await kv.set(
     framesCategoryFramesKey(categoryId),
     ids.filter((id) => id !== frameId),
@@ -491,7 +521,8 @@ async function getFrameFromKv(
     },
     { nx: true },
   );
-  const ids = (await kv.get<string[]>(framesCategoryFramesKey(categoryId))) ?? [];
+  const ids =
+    (await kv.get<string[]>(framesCategoryFramesKey(categoryId))) ?? [];
   if (!ids.includes(frameId)) {
     await kv.set(framesCategoryFramesKey(categoryId), [...ids, frameId]);
   }
@@ -577,7 +608,7 @@ export async function updateFrameMetadata(
               secure: true,
               transformation: [{ fetch_format: "auto", quality: "auto" }],
             })
-          : v.existingFrameUrl ?? null;
+          : (v.existingFrameUrl ?? null);
 
         const thumbUrl = v.hasThumb
           ? cloudinary.url(thumbPid, {
@@ -585,7 +616,7 @@ export async function updateFrameMetadata(
               secure: true,
               transformation: [{ fetch_format: "auto", quality: "auto" }],
             })
-          : v.existingThumbUrl ?? null;
+          : (v.existingThumbUrl ?? null);
 
         return {
           id: varName,
@@ -601,7 +632,8 @@ export async function updateFrameMetadata(
   await kv.set(framesFrameKey(frameId), frame);
 
   // Ensure category and global indexes contain this category & frame
-  const catFrames = (await kv.get<string[]>(framesCategoryFramesKey(categoryId))) ?? [];
+  const catFrames =
+    (await kv.get<string[]>(framesCategoryFramesKey(categoryId))) ?? [];
   if (!catFrames.includes(frameId)) {
     await kv.set(framesCategoryFramesKey(categoryId), [...catFrames, frameId]);
   }
@@ -636,10 +668,11 @@ export async function migrateFrameVariantType(
   let changed = false;
   for (const variant of frame.variants) {
     const fresh = freshSlots[variant.id] ?? {};
-    const slots: { key: "frame" | "thumb"; pid: string | null | undefined }[] = [
-      { key: "frame", pid: variant.framePublicId },
-      { key: "thumb", pid: variant.thumbPublicId },
-    ];
+    const slots: { key: "frame" | "thumb"; pid: string | null | undefined }[] =
+      [
+        { key: "frame", pid: variant.framePublicId },
+        { key: "thumb", pid: variant.thumbPublicId },
+      ];
 
     for (const slot of slots) {
       if (!slot.pid || fresh[slot.key]) continue;
