@@ -1,12 +1,11 @@
 import { Navbar } from "@/components/navbar";
 import { Hero } from "@/components/home/hero";
-import { Gallery } from "@/components/home/gallery";
 import { Footer } from "@/components/footer";
-import { getOrigin } from "@/lib/url";
+import { Transformation } from "@/components/home/transformation";
 import { Features } from "@/components/home/features";
-import { HowItWorks } from "@/components/home/how-it-works";
-import { Faq } from "@/components/home/faq";
 import { Pricing } from "@/components/home/pricing";
+import { Faq } from "@/components/home/faq";
+import { getOrigin } from "@/lib/url";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { APP_NAME } from "@/config";
 import { metatag } from "@/lib/metatag";
@@ -41,8 +40,7 @@ export default async function Home() {
       />
       <Navbar />
       <Hero />
-      <Gallery />
-      <HowItWorks />
+      <Transformation />
       <Features />
       <Pricing />
       <Faq />

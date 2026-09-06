@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Fredoka } from "next/font/google";
+import { Fredoka, Geist } from "next/font/google";
 import { Providers } from "@/providers/providers";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { APP_NAME, DEVELOPED_BY, DEVELOPED_BY_URL } from "@/config";
-import { getOrigin } from "@/lib/url";
+import { getCurrentUrl, getOrigin } from "@/lib/url";
 import { createServerClient } from "@/lib/supabase/server";
 
 const fredoka = Fredoka({ subsets: ["latin"], variable: "--font-fredoka" });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -80,23 +81,38 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = new URL(await getCurrentUrl()).pathname;
   const supabase = await createServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
-    const isTrialActive = user.user_metadata?.trial_ends_at ? new Date(user.user_metadata.trial_ends_at) > new Date() : false;
-    
-    (user as any).is_pro = user.user_metadata?.is_pro || isTrialActive;
-    (user as any).polar_order_id = user.user_metadata?.polar_order_id;
-    (user as any).trial_ends_at = user.user_metadata?.trial_ends_at;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_pro, trial_ends_at, polar_order_id")
+      .eq("id", user.id)
+      .single();
+
+    const rawTrial =
+      profile?.trial_ends_at || user.user_metadata?.trial_ends_at;
+    const isTrialActive = rawTrial ? new Date(rawTrial) > new Date() : false;
+    const isUserPro =
+      profile?.is_pro === true ||
+      user.user_metadata?.is_pro === true ||
+      (user as any).is_pro === true;
+
+    (user as any).is_pro = isUserPro || isTrialActive;
+    (user as any).polar_order_id =
+      profile?.polar_order_id || user.user_metadata?.polar_order_id;
+    (user as any).trial_ends_at = rawTrial;
   }
   return (
     <html
       lang="en"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={cn(fredoka.variable)}
+      data-route={pathname}
+      className={cn("dark", fredoka.variable, geist.variable)}
     >
       <body className={cn("antialiased")}>
         <Providers user={user as any}>{children}</Providers>

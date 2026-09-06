@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { getCurrentUrl, getOrigin } from "@/lib/url";
 import { polar } from "@/lib/polar";
 
 export async function GET() {
-  const supabase = await createServerClient();
   const currentUrl = await getCurrentUrl();
   const url = new URL(currentUrl);
 
@@ -27,8 +26,12 @@ export async function GET() {
       const userId = checkout.externalCustomerId;
 
       if (userId) {
-        // Update the Supabase profile securely
-        const { error } = await supabase
+        // Update the Supabase profile securely. Uses the stateless service-role
+        // client (no user JWT) so the `protect_profile_fields` trigger — which
+        // reverts is_pro/polar_order_id/trial_ends_at whenever
+        // auth.role() = 'authenticated' — does NOT undo this server-side write.
+        const admin = createServiceClient();
+        const { error } = await admin
           .from("profiles")
           .update({ is_pro: true, polar_order_id: checkout.id })
           .eq("id", userId);

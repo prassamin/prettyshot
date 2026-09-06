@@ -1,391 +1,628 @@
 "use client";
 
-import { useEditorStore } from "@/stores/editor-store";
-import { activateFreeTrial } from "@/app/actions/activate-trial";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAppStore } from "@/stores/app-store";
-import { Button } from "@heroui/react";
+import { useEditorEngine } from "@/editor/lib/engine";
+import { activateFreeTrial } from "@/app/actions/activate-trial";
 import { useRouter } from "@/hooks/use-router";
-import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isPro } from "@/lib/utils";
+import { getDesignSnapshot } from "@/lib/snapshots";
+import Link from "next/link";
 import {
   Plus,
-  Monitor,
-  Layout,
-  ImageIcon,
-  ChevronRight,
   Crown,
+  Timer,
   Loader2,
+  Trash2,
+  ExternalLink,
+  Edit2,
+  Check,
+  X,
+  UploadCloud,
+  FolderClosed,
+  MoreVertical,
+  ArrowRight,
+  Clock3,
+  Layers,
 } from "lucide-react";
+import { Button, Dropdown, Label, Modal } from "@heroui/react";
 import { motion } from "framer-motion";
-import { Twitter } from "@/components/icons/twitter";
-import { isPro } from "@/lib/utils";
 
-export default function DashboardOverview() {
+interface DesignItem {
+  id: string;
+  name: string;
+  updated_at: string;
+  config: Record<string, any>;
+}
+
+function formatRelativeTime(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffInSeconds < 60) return "just now";
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  } catch {
+    return "recently";
+  }
+}
+
+/* ─── Motion presets ──────────────────────────────────────────── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
+const stagger = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.06, delayChildren: 0.08 },
+  },
+};
+
+export default function DashboardOverview({
+  initialDesigns,
+}: {
+  initialDesigns: DesignItem[];
+}) {
   const { user } = useAppStore();
   const router = useRouter();
-  const [designs, setDesigns] = useState<any[]>([]);
-  const [loadingDesigns, setLoadingDesigns] = useState(true);
+  const pro = useMemo(() => isPro(user), [user]);
+
+  // State
+  const [designs, setDesigns] = useState<DesignItem[]>(initialDesigns);
   const [activatingTrial, setActivatingTrial] = useState(false);
-  const pro = isPro(user);
 
+  // Inline rename state (no modal — the card title turns into an editor)
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameInput, setRenameInput] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete modal state
+  const [deletingDesign, setDeletingDesign] = useState<DesignItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Global Keyboard Shortcuts
   useEffect(() => {
-    if (!user || !pro.isActive) {
-      setLoadingDesigns(false);
-      return;
-    }
-    const fetchDesigns = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("designs")
-        .select("id, name, updated_at, config")
-        .order("updated_at", { ascending: false })
-        .limit(4);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      const isInput =
+        tag === "input" ||
+        tag === "textarea" ||
+        (e.target as HTMLElement)?.isContentEditable;
 
-      setDesigns(data || []);
-      setLoadingDesigns(false);
+      if (isInput) {
+        if (e.key === "Escape") {
+          (e.target as HTMLElement).blur();
+        }
+        return;
+      }
+
+      if (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        handleLaunchNew();
+        return;
+      }
     };
-    fetchDesigns();
-  }, [user]);
 
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleLaunchNew = () => {
+    const engine = useEditorEngine.getState();
+    engine.reset();
+    const newId = crypto.randomUUID();
+    engine.setDesignId(newId);
+    router.push(`/editor/${newId}`);
+  };
+
+  const startRename = (design: DesignItem) => {
+    setRenamingId(design.id);
+    setRenameInput(design.name || "Untitled Design");
+    // Focus after the input mounts
+    requestAnimationFrame(() => {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    });
+  };
+
+  const cancelRename = () => {
+    if (isRenaming) return;
+    setRenamingId(null);
+    setRenameInput("");
+  };
+
+  const handleSaveRename = async () => {
+    if (!renamingId || !renameInput.trim() || !user) return;
+    setIsRenaming(true);
+    try {
+      const supabase = createClient();
+      const updatedName = renameInput.trim();
+      const { error } = await supabase
+        .from("designs")
+        .update({ name: updatedName, updated_at: new Date().toISOString() })
+        .eq("id", renamingId);
+
+      if (!error) {
+        setDesigns((prev) =>
+          prev.map((d) =>
+            d.id === renamingId ? { ...d, name: updatedName } : d,
+          ),
+        );
+        setRenamingId(null);
+      }
+    } catch (err) {
+      console.error("Rename failed:", err);
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingDesign || !user) return;
+    setIsDeleting(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("designs")
+        .delete()
+        .eq("id", deletingDesign.id);
+
+      if (!error) {
+        setDesigns((prev) => prev.filter((d) => d.id !== deletingDesign.id));
+        setDeletingDesign(null);
+      }
+    } catch (err) {
+      console.error("Delete failed:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Filtered designs
   if (!user) return null;
+
   const firstName =
     user.user_metadata?.full_name?.split(" ")[0] ||
     user.email?.split("@")[0] ||
     "there";
 
-  const templates = [
-    {
-      name: "Blank Canvas",
-      icon: Plus,
-      color: "text-orange-600",
-      bg: "bg-orange-100/50",
-      hoverBg: "hover:bg-orange-50/50",
-      border: "hover:border-orange-200",
-      shadow: "hover:shadow-orange-500/10",
-      desc: "Start from scratch",
-    },
-    {
-      name: "macOS Window",
-      icon: Monitor,
-      color: "text-violet-600",
-      bg: "bg-violet-100/50",
-      hoverBg: "hover:bg-violet-50/50",
-      border: "hover:border-violet-200",
-      shadow: "hover:shadow-violet-500/10",
-      desc: "Classic desktop feel",
-    },
-    {
-      name: "Browser Frame",
-      icon: Layout,
-      color: "text-rose-600",
-      bg: "bg-rose-100/50",
-      hoverBg: "hover:bg-rose-50/50",
-      border: "hover:border-rose-200",
-      shadow: "hover:shadow-rose-500/10",
-      desc: "Safari & Chrome UI",
-    },
-    {
-      name: "Social Post",
-      icon: Twitter,
-      color: "text-sky-600",
-      bg: "bg-sky-100/50",
-      hoverBg: "hover:bg-sky-50/50",
-      border: "hover:border-sky-200",
-      shadow: "hover:shadow-sky-500/10",
-      desc: "Optimized for feeds",
-    },
-  ];
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="space-y-10 pb-10">
-      {/* Header Area */}
+    <div className="relative pb-16">
       <motion.div
-        initial={{ y: 10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4 }}
-        className="flex flex-col sm:flex-row sm:items-end justify-between gap-6"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+        className="space-y-10"
       >
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
-            Overview
-          </h1>
-          <p className="mt-2 text-zinc-500 font-medium">
-            Welcome back,{" "}
-            <span className="bg-linear-to-r from-orange-600 to-rose-600 bg-clip-text text-transparent font-bold">
-              {firstName}
-            </span>
-            . Let&apos;s create something beautiful today.
-          </p>
-        </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          {pro.type !== "pro" && (
-            <Button
-              onPress={() => router.push("/checkout", { external: true })}
-              className="bg-zinc-900 text-white font-medium flex-1 sm:flex-none shadow-md shadow-zinc-900/10"
-            >
-              Upgrade
-            </Button>
-          )}
-          <Button
-            onPress={() => {
-              useEditorStore.getState().reset();
-              router.push("/editor");
-            }}
-            className="bg-linear-to-r from-orange-500 to-rose-500 text-white font-semibold px-6 shadow-lg shadow-rose-500/25 border border-white/20 flex-1 sm:flex-none transition-transform hover:scale-105"
-          >
-            New Mockup
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* Trial Activation Banner */}
-      {!pro.isActive && !user.trial_ends_at && (
-        <motion.div
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.05 }}
-          className="relative overflow-hidden rounded-2xl bg-linear-to-r from-orange-500 to-rose-500 p-6 md:p-8 shadow-lg shadow-orange-500/20 flex flex-col sm:flex-row items-center justify-between gap-6"
-        >
-          <div className="relative z-10 text-white text-center sm:text-left">
-            <h3 className="text-xl md:text-2xl font-bold tracking-tight">
-              Try Prettyshot Pro for free
-            </h3>
-            <p className="mt-2 text-orange-100 font-medium text-sm md:text-base max-w-lg">
-              Get 24 hours of full access to Cloud Sync, watermarks, glass
-              frames, and more.
-            </p>
-          </div>
-          <Button
-            isPending={activatingTrial}
-            onPress={async () => {
-              setActivatingTrial(true);
-              const res = await activateFreeTrial();
-              if (res.success) {
-                window.location.reload();
-              } else {
-                alert(res.error);
-                setActivatingTrial(false);
-              }
-            }}
-            size="lg"
-            className="relative z-10 bg-white text-rose-600 font-bold px-8 shadow-xl hover:scale-105 transition-transform w-full sm:w-auto"
-          >
-            {activatingTrial && <Loader2 className="mr-2 animate-spin size-4" />}
-            Activate Trial
-          </Button>
-
-          {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 -translate-y-12 translate-x-12 size-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 translate-y-12 -translate-x-12 size-48 rounded-full bg-black/10 blur-2xl pointer-events-none" />
-        </motion.div>
-      )}
-
-      {/* Templates Grid */}
-      <motion.section
-        initial={{ y: 10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-zinc-900">
-            Start from template
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {templates.map((template) => {
-            const isLocked = !pro.isActive && template.name !== "Blank Canvas";
-
-            return (
-              <button
-                key={template.name}
-                onClick={() => {
-                  if (isLocked) {
-                    router.push("/checkout", { external: true });
-                    return;
-                  }
-
-                  const store = useEditorStore.getState();
-                  store.reset();
-
-                  // Configure template presets
-                  if (template.name === "macOS Window") {
-                    store.setDeviceFrame("macos");
-                    store.setPadding(64);
-                  } else if (template.name === "Browser Frame") {
-                    store.setDeviceFrame("windows");
-                    store.setPadding(64);
-                  } else if (template.name === "Social Post") {
-                    store.setAspectRatio(1);
-                    store.setPadding(48);
-                    store.setDeviceFrame("none");
-                  }
-
-                  const newId = crypto.randomUUID();
-                  store.setDesignId(newId);
-                  router.push(`/editor?id=${newId}`);
-                }}
-                className={`group relative flex flex-col items-start gap-4 rounded-2xl border border-zinc-200/60 bg-white p-5 text-left transition-all duration-300 hover:shadow-xl ${template.border} ${template.shadow} ${template.hoverBg} overflow-hidden`}
-              >
-                {isLocked && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[2px] transition-all group-hover:bg-white/30">
-                    <div className="flex items-center gap-1.5 rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-bold tracking-wide text-white shadow-lg group-hover:scale-105 transition-transform">
-                      <Crown className="size-3.5 text-orange-400" />
-                      PRO
-                    </div>
-                  </div>
-                )}
-
-                <div
-                  className={`relative z-0 rounded-xl p-3 ${template.bg} ${template.color} transition-transform duration-500 ${!isLocked ? "group-hover:scale-110" : ""}`}
-                >
-                  <template.icon className="size-5" />
-                </div>
-                <div className="relative z-0">
-                  <h3 className="font-semibold text-zinc-900">
-                    {template.name}
-                  </h3>
-                  <p className="text-xs text-zinc-500 mt-1 font-medium">
-                    {template.desc}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </motion.section>
-
-      {/* Recent Designs (Empty State) */}
-      <motion.section
-        initial={{ y: 10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-zinc-900">
-            Recent designs
-          </h2>
-          {pro.isActive && designs.length > 0 && (
-            <Button
-              size="sm"
-              variant="secondary"
-              onPress={() => router.push("/dashboard/designs")}
-              className="text-zinc-500 font-medium"
-            >
-              View all
-            </Button>
-          )}
-        </div>
-
-        {!pro.isActive ? (
-          <div className="relative flex flex-col items-center justify-center rounded-3xl border border-dashed border-zinc-200/80 bg-zinc-50/50 py-20 px-4 text-center overflow-hidden">
-            <div className="absolute -top-32 -left-32 size-64 rounded-full bg-linear-to-br from-orange-200/30 via-rose-200/20 to-transparent blur-3xl" />
-            <div className="absolute -bottom-32 -right-32 size-64 rounded-full bg-linear-to-tr from-violet-200/20 via-fuchsia-100/20 to-transparent blur-3xl" />
-            <div className="relative z-10 flex size-16 items-center justify-center rounded-2xl bg-white shadow-sm border border-zinc-100 mb-5">
-              <Monitor className="size-7 text-orange-400" />
+        {/* ─── Hero header ─────────────────────────────────────── */}
+        <motion.div variants={fadeUp} className="relative">
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-xl">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                {greeting},{" "}
+                <span className="bg-linear-to-r from-primary via-danger to-primary bg-clip-text font-bold text-transparent">
+                  {firstName}
+                </span>
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Drop a screenshot, frame it beautifully, and ship it. Your
+                creative workspace is ready.
+              </p>
             </div>
-            <h3 className="relative z-10 text-base font-semibold text-zinc-900">
-              Cloud Sync is a Pro feature
-            </h3>
-            <p className="relative z-10 mt-2 text-sm text-zinc-500 font-medium max-w-sm">
-              Upgrade to Pro to automatically save all your mockups to the cloud
-              and access them seamlessly from any device.
-            </p>
+
+            {/* New design */}
             <Button
-              onPress={() => router.push("/checkout", { external: true })}
-              className="relative z-10 mt-6 bg-zinc-900 text-white font-medium shadow-md shadow-zinc-900/10 transition-transform hover:scale-105"
+              onPress={handleLaunchNew}
+              className="group/cta relative h-11 shrink-0 cursor-pointer overflow-hidden rounded-xl bg-linear-to-r from-primary to-danger px-5 text-sm font-bold text-foreground shadow-lg shadow-danger/25 transition-all hover:shadow-xl hover:shadow-danger/30 active:scale-[0.98]"
             >
-              Upgrade to Pro
+              <Plus className="mr-1.5 size-4 transition-transform duration-200 group-hover/cta:rotate-90" />
+              New Design
             </Button>
           </div>
-        ) : loadingDesigns ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-orange-500" />
-          </div>
-        ) : designs.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {designs.map((d) => {
-              const thumbnail = d.config?.image;
-              return (
+        </motion.div>
+
+        {/* ─── Trial banner ───────────────────────────────────── */}
+        {!pro.isActive && !user.trial_ends_at && (
+          <motion.div variants={fadeUp}>
+            <div className="group relative overflow-hidden rounded-2xl border border-primary/20 bg-linear-to-r from-primary/12 via-danger/10 to-surface p-px">
+              <div className="relative flex flex-col gap-4 rounded-[15px] bg-surface/40 p-5 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <div
-                  key={d.id}
-                  onClick={() => router.push(`/editor?id=${d.id}`)}
-                  className="group relative flex flex-col rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200/60 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1 hover:ring-orange-200"
-                >
-                  <div className="aspect-16/10 w-full relative overflow-hidden bg-zinc-50 border-b border-zinc-100/50">
-                    {thumbnail && thumbnail.startsWith("http") ? (
-                      <>
-                        <div
-                          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 transform scale-125 transition-transform duration-700 group-hover:scale-150"
-                          style={{ backgroundImage: `url(${thumbnail})` }}
-                        />
-                        <img
-                          src={thumbnail}
-                          alt={d.name}
-                          className="relative z-10 w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-105 drop-shadow-md"
-                        />
-                      </>
-                    ) : (
-                      <div className="absolute inset-0 bg-linear-to-br from-orange-100/80 via-rose-50 to-violet-100/80 flex items-center justify-center transition-transform duration-700 group-hover:scale-105">
-                        <ImageIcon className="size-8 text-orange-300/80" />
-                      </div>
-                    )}
-
-                    <div className="absolute inset-0 bg-linear-to-t from-zinc-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20" />
+                  aria-hidden
+                  className="pointer-events-none absolute -right-10 -top-16 size-48 rounded-full bg-primary/15 blur-3xl transition-opacity group-hover:opacity-150"
+                />
+                <div className="relative flex items-start gap-4">
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-warning/25 bg-warning/10 text-warning shadow-[0_0_24px_color-mix(in_oklab,var(--warning)_15%,transparent)]">
+                    <Timer className="size-5" />
                   </div>
-
-                  <div className="flex items-center justify-between p-4 bg-white relative z-20">
-                    <div className="flex flex-col min-w-0 pr-4">
-                      <h3 className="font-semibold text-sm text-zinc-900 truncate group-hover:text-orange-600 transition-colors">
-                        {d.name || "Untitled Design"}
-                      </h3>
-                      <p className="text-xs text-zinc-500 font-medium mt-0.5">
-                        {new Date(d.updated_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 shrink-0 flex items-center justify-center size-8 rounded-full bg-orange-50 text-orange-600 transform translate-x-2 group-hover:translate-x-0">
-                      <ChevronRight className="size-4" />
-                    </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground sm:text-base">
+                      Try PrettyShot Pro — free for 24 hours
+                    </h3>
+                    <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground">
+                      Cloud sync, live snapshot API endpoints, premium device
+                      frames, and 4K exports — everything unlocked.
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="relative flex flex-col items-center justify-center rounded-3xl border border-dashed border-zinc-200/80 bg-zinc-50/50 py-20 px-4 text-center overflow-hidden">
-            {/* Subtle vibrant blurs */}
-            <div className="absolute -top-32 -left-32 size-64 rounded-full bg-linear-to-br from-orange-200/30 via-rose-200/20 to-transparent blur-3xl" />
-            <div className="absolute -bottom-32 -right-32 size-64 rounded-full bg-linear-to-tr from-violet-200/20 via-fuchsia-100/20 to-transparent blur-3xl" />
-
-            <div className="relative z-10 flex size-16 items-center justify-center rounded-2xl bg-white shadow-sm border border-zinc-100 mb-5">
-              <ImageIcon className="size-7 text-zinc-300" />
-              <div className="absolute -bottom-2 -right-2 flex size-7 items-center justify-center rounded-full bg-linear-to-br from-orange-400 to-rose-400 shadow-md shadow-orange-500/30">
-                <Plus className="size-4" />
+                <Button
+                  isPending={activatingTrial}
+                  onPress={async () => {
+                    setActivatingTrial(true);
+                    const res = await activateFreeTrial();
+                    if (res.success) {
+                      window.location.reload();
+                    } else {
+                      alert(res.error);
+                      setActivatingTrial(false);
+                    }
+                  }}
+                  className="relative h-10 shrink-0 cursor-pointer rounded-xl bg-linear-to-r from-primary to-danger px-5 text-xs font-bold text-foreground shadow-md shadow-danger-soft-hover transition-all hover:shadow-lg hover:shadow-danger/30 active:scale-[0.98]"
+                >
+                  {activatingTrial && (
+                    <Loader2 className="mr-2 size-3.5 animate-spin" />
+                  )}
+                  Activate Free Trial
+                </Button>
               </div>
             </div>
-            <h3 className="relative z-10 text-base font-semibold text-zinc-900">
-              No mockups yet
-            </h3>
-            <p className="relative z-10 mt-2 text-sm text-zinc-500 font-medium max-w-sm">
-              You haven&apos;t created any designs recently. Start from a
-              template above or create a completely blank canvas.
-            </p>
-            <Button
-              onPress={() => {
-                useEditorStore.getState().reset();
-                router.push("/editor");
-              }}
-              variant="outline"
-              className="relative z-10 mt-6 border-zinc-200 bg-white font-medium shadow-sm hover:bg-zinc-50 transition-colors"
-            >
-              Create your first design
-            </Button>
-          </div>
+          </motion.div>
         )}
-      </motion.section>
+
+        {/* ─── Stat cards ─────────────────────────────────────── */}
+        <motion.section variants={fadeUp}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* Total designs */}
+            <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-surface-tertiary/50 p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-lg">
+              <div
+                aria-hidden
+                className="absolute -right-6 -top-8 size-24 rounded-full bg-primary/8 blur-2xl transition-all duration-300 group-hover:bg-primary/12"
+              />
+              <div className="relative flex items-center justify-between">
+                <span className="text-xs font-medium tracking-wide text-muted-foreground">
+                  Designs
+                </span>
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
+                  <FolderClosed className="size-4" />
+                </span>
+              </div>
+              <div className="relative mt-3 flex items-end gap-1.5">
+                <span className="text-3xl font-bold tabular-nums tracking-tight text-foreground">
+                  {designs.length}
+                </span>
+                <span className="pb-1 text-[11px] text-muted-foreground">
+                  {designs.length === 1 ? "design" : "designs"}
+                </span>
+              </div>
+              <p className="relative mt-1 text-[11px] text-muted-foreground/80">
+                {pro.isActive
+                  ? "Saved & synced to cloud"
+                  : "Local session only"}
+              </p>
+            </div>
+
+            {/* Plan Tier */}
+            <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-surface-tertiary/50 p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-lg">
+              <div
+                aria-hidden
+                className="absolute -right-6 -top-8 size-24 rounded-full bg-warning/8 blur-2xl transition-all duration-300 group-hover:bg-warning/12"
+              />
+              <div className="relative flex items-center justify-between">
+                <span className="text-xs font-medium tracking-wide text-muted-foreground">
+                  Plan Tier
+                </span>
+                <span className="flex size-8 items-center justify-center rounded-lg bg-warning/10 text-warning transition-transform duration-300 group-hover:scale-110">
+                  <Crown className="size-4" />
+                </span>
+              </div>
+              <div className="relative mt-3 flex items-center gap-2">
+                <span className="text-3xl font-bold tracking-tight text-foreground">
+                  {pro.type === "pro"
+                    ? "Pro"
+                    : pro.type === "trial"
+                      ? "Trial"
+                      : "Free"}
+                </span>
+              </div>
+              <p className="relative mt-1 text-[11px] text-muted-foreground/80">
+                {pro.type === "pro"
+                  ? "Lifetime license"
+                  : pro.type === "trial"
+                    ? "Trial in progress"
+                    : "Upgrade anytime"}
+              </p>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ─── Recent designs ─────────────────────────────────── */}
+        <motion.section variants={fadeUp}>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-bold tracking-tight text-foreground">
+              Recent designs
+            </h2>
+
+            {designs.length > 0 && (
+              <Link
+                href="/dashboard/designs"
+                className="group flex items-center gap-1.5 text-xs font-semibold text-primary transition-colors hover:text-primary/80"
+              >
+                View all
+                <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </Link>
+            )}
+          </div>
+
+          {!pro.isActive ? (
+            /* Free state */
+            <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border/80 bg-surface/40 px-6 py-16 text-center">
+              <div
+                aria-hidden
+                className="absolute -left-16 -top-20 size-56 rounded-full bg-primary/8 blur-3xl"
+              />
+              <div
+                aria-hidden
+                className="absolute -bottom-20 -right-16 size-56 rounded-full bg-danger/8 blur-3xl"
+              />
+              <div className="relative flex size-14 items-center justify-center rounded-2xl border border-border/60 bg-surface text-warning shadow-lg">
+                <UploadCloud className="size-6" />
+              </div>
+              <h3 className="relative mt-4 text-base font-bold text-foreground">
+                Cloud sync is a Pro feature
+              </h3>
+              <p className="relative mt-1.5 max-w-sm text-xs leading-relaxed text-muted-foreground">
+                Upgrade once to save designs to the cloud and generate live,
+                shareable snapshot links from anywhere.
+              </p>
+              <Button
+                onPress={() => router.push("/checkout", { external: true })}
+                className="relative mt-5 h-9 cursor-pointer rounded-xl bg-linear-to-r from-primary to-danger px-4 text-xs font-bold text-foreground shadow-md shadow-danger-soft-hover transition-all hover:shadow-lg active:scale-[0.98]"
+              >
+                <Crown className="mr-1.5 size-3.5" />
+                Upgrade to Pro
+              </Button>
+            </div>
+          ) : designs.length > 0 ? (
+            /* Grid */
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {designs.slice(0, 6).map((design, i) => {
+                const snapshotUrl = getDesignSnapshot(design.id);
+                return (
+                  <motion.div
+                    key={design.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.45,
+                      delay: 0.05 * i,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    onClick={() => {
+                      // Don't navigate away while the inline rename is open
+                      if (renamingId === design.id) return;
+                      router.push(`/editor/${design.id}`);
+                    }}
+                    className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/70 bg-surface-tertiary/50 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-border hover:shadow-xl"
+                  >
+                    {/* Preview stage */}
+                    <div className="relative aspect-16/10 w-full overflow-hidden">
+                      <img
+                        src={snapshotUrl}
+                        alt={design.name}
+                        loading="lazy"
+                        className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md transition-all duration-500 group-hover:scale-[1.03]"
+                      />
+
+                      {/* hover sheen */}
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 z-10 bg-linear-to-t from-overlay/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      />
+                    </div>
+
+                    {/* Info footer */}
+                    <div className="flex items-center justify-between gap-2 p-3.5">
+                      <div className="min-w-0 flex-1">
+                        {renamingId === design.id ? (
+                          <div
+                            className="flex items-center gap-1.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              ref={renameInputRef}
+                              type="text"
+                              value={renameInput}
+                              onChange={(e) => setRenameInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveRename();
+                                if (e.key === "Escape") cancelRename();
+                              }}
+                              onBlur={() => {
+                                // Save on blur only if not clicking the save btn
+                                setTimeout(() => {
+                                  if (renamingId === design.id) cancelRename();
+                                }, 120);
+                              }}
+                              className="min-w-0 flex-1 rounded-md border border-primary/40 bg-surface px-1.5 py-0.5 text-xs font-bold text-foreground outline-none ring-1 ring-primary/20 focus:border-primary focus:ring-primary/30"
+                            />
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={handleSaveRename}
+                              disabled={isRenaming}
+                              className="flex size-5.5 shrink-0 cursor-pointer items-center justify-center rounded-md bg-success-soft text-success transition-colors hover:bg-success/25 disabled:opacity-50"
+                              aria-label="Save name"
+                            >
+                              {isRenaming ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                <Check className="size-3" />
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={cancelRename}
+                              className="flex size-5.5 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-tertiary hover:text-foreground"
+                              aria-label="Cancel rename"
+                            >
+                              <X className="size-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <h3 className="truncate text-xs font-bold text-foreground transition-colors group-hover:text-primary">
+                            {design.name || "Untitled Design"}
+                          </h3>
+                        )}
+                        <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Clock3 className="size-3" />
+                          Edited {formatRelativeTime(design.updated_at)}
+                        </p>
+                      </div>
+
+                      <Dropdown>
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          aria-label="Project actions"
+                          variant="ghost"
+                          className="size-7.5 shrink-0 cursor-pointer rounded-lg text-muted-foreground transition-colors hover:bg-surface-tertiary hover:text-foreground"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="size-4" />
+                        </Button>
+                        <Dropdown.Popover>
+                          <Dropdown.Menu
+                            onAction={(key) => {
+                              if (key === "open")
+                                router.push(`/editor/${design.id}`);
+                              if (key === "rename") startRename(design);
+                              if (key === "delete") setDeletingDesign(design);
+                            }}
+                          >
+                            <Dropdown.Item id="open" textValue="Open in Editor">
+                              <Label className="flex items-center gap-2 text-xs">
+                                <ExternalLink className="size-3.5" /> Open in
+                                Editor
+                              </Label>
+                            </Dropdown.Item>
+                            <Dropdown.Item id="rename" textValue="Rename">
+                              <Label className="flex items-center gap-2 text-xs">
+                                <Edit2 className="size-3.5" /> Rename
+                              </Label>
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              id="delete"
+                              textValue="Delete"
+                              variant="danger"
+                            >
+                              <Label className="flex items-center gap-2 text-xs text-danger">
+                                <Trash2 className="size-3.5" /> Delete
+                              </Label>
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown.Popover>
+                      </Dropdown>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Empty */
+            <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border/80 bg-surface/40 px-6 py-16 text-center">
+              <div
+                aria-hidden
+                className="absolute -left-16 -top-20 size-56 rounded-full bg-primary/8 blur-3xl"
+              />
+              <div
+                aria-hidden
+                className="absolute -bottom-20 -right-16 size-56 rounded-full bg-danger/8 blur-3xl"
+              />
+              <div className="relative flex size-14 items-center justify-center rounded-2xl border border-border/60 bg-surface text-muted-foreground shadow-lg">
+                <Layers className="size-6" />
+              </div>
+              <h3 className="relative mt-4 text-base font-bold text-foreground">
+                Start your first design
+              </h3>
+              <p className="relative mt-1.5 max-w-sm text-xs leading-relaxed text-muted-foreground">
+                Drop a screenshot above or open a blank canvas to begin.
+              </p>
+              <Button
+                onPress={handleLaunchNew}
+                className="relative mt-5 h-9 cursor-pointer rounded-xl bg-linear-to-r from-primary to-danger px-4 text-xs font-bold text-foreground shadow-md shadow-danger-soft-hover transition-all hover:shadow-lg active:scale-[0.98]"
+              >
+                <Plus className="mr-1.5 size-3.5" />
+                Create design
+              </Button>
+            </div>
+          )}
+        </motion.section>
+      </motion.div>
+
+      {/* ─── Delete Modal ────────────────────────────────────── */}
+      <Modal
+        isOpen={Boolean(deletingDesign)}
+        onOpenChange={(open) => !open && setDeletingDesign(null)}
+      >
+        <Modal.Backdrop variant="blur">
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-100 border border-border bg-surface shadow-2xl">
+              <Modal.CloseTrigger />
+              <Modal.Header>
+                <Modal.Heading className="text-sm font-semibold text-foreground">
+                  Delete design?
+                </Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-foreground">
+                    &quot;{deletingDesign?.name || "Untitled Design"}&quot;
+                  </span>
+                  ? This action cannot be undone.
+                </p>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => setDeletingDesign(null)}
+                  className="cursor-pointer text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  isPending={isDeleting}
+                  onPress={handleConfirmDelete}
+                  className="cursor-pointer text-xs font-bold"
+                >
+                  Delete
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
     </div>
   );
 }

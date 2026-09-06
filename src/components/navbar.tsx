@@ -13,23 +13,31 @@ import { Button, Avatar, Dropdown } from "@heroui/react";
 import { Github } from "@/components/icons/github";
 import {
   LogOut,
-  LayoutTemplate,
   Sparkles,
   CreditCard,
   Zap,
   Home,
+  PanelsRightBottomIcon,
+  LayoutGrid,
+  Tag,
+  HelpCircle,
+  ChevronRight,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { APP_NAME, APP_GITHUB_URL } from "@/config";
-import { useRouter } from "@bprogress/next";
+import { useRouter } from "@/hooks/use-router";
 import { useAppStore } from "@/stores/app-store";
 import { isPro } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
-const navLinks = [
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+const navLinks: {
+  label: string;
+  href: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}[] = [
+  { label: "Features", href: "#features", icon: LayoutGrid },
+  { label: "Pricing", href: "#pricing", icon: Tag },
+  { label: "FAQ", href: "#faq", icon: HelpCircle },
 ];
 
 function SpotlightNav({ children }: { children: React.ReactNode }) {
@@ -70,7 +78,7 @@ function SpotlightNav({ children }: { children: React.ReactNode }) {
               left: spotlightX,
               top: spotlightY,
               background:
-                "radial-gradient(circle, rgba(251,146,60,0.12) 0%, rgba(244,63,94,0.08) 40%, transparent 70%)",
+                "radial-gradient(circle, color-mix(in oklab, var(--primary) 14%, transparent) 0%, color-mix(in oklab, var(--primary) 7%, transparent) 40%, transparent 70%)",
             }}
           />
         </motion.div>
@@ -81,8 +89,10 @@ function SpotlightNav({ children }: { children: React.ReactNode }) {
 }
 
 export function Navbar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const router = useRouter();
   const { user, setUser } = useAppStore();
   const pro = isPro(user);
@@ -96,8 +106,27 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Close the mobile menu on outside click or Escape.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      if (!headerRef.current?.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMobileOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileOpen]);
+
   return (
-    <header className="fixed top-0 right-0 left-0 z-50">
+    <header ref={headerRef} className="fixed top-0 right-0 left-0 z-50">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <motion.div
           initial={{ y: -30, opacity: 0, filter: "blur(10px)" }}
@@ -111,8 +140,8 @@ export function Navbar() {
               className="absolute -inset-px z-0 overflow-hidden rounded-2xl"
               style={{
                 background: scrolled
-                  ? "linear-gradient(var(--navbar-border-angle, 0deg), rgba(251,146,60,0.3), rgba(244,63,94,0.2), rgba(139,92,246,0.2), rgba(59,130,246,0.1), rgba(251,146,60,0.3))"
-                  : "linear-gradient(var(--navbar-border-angle, 0deg), rgba(0,0,0,0.06), rgba(0,0,0,0.03), rgba(0,0,0,0.06))",
+                  ? "linear-gradient(var(--navbar-border-angle, 0deg), color-mix(in oklab, var(--primary) 40%, transparent), color-mix(in oklab, var(--primary) 18%, transparent), color-mix(in oklab, var(--primary) 8%, transparent), color-mix(in oklab, var(--primary) 40%, transparent))"
+                  : "linear-gradient(var(--navbar-border-angle, 0deg), color-mix(in oklab, var(--foreground) 9%, transparent), color-mix(in oklab, var(--foreground) 4%, transparent), color-mix(in oklab, var(--foreground) 9%, transparent))",
                 animation: "rotateBorder 6s linear infinite",
               }}
             />
@@ -120,8 +149,8 @@ export function Navbar() {
             <nav
               className={`relative z-10 flex items-center justify-between rounded-2xl px-3 py-2 transition-all duration-500 sm:px-5 sm:py-2.5 ${
                 scrolled
-                  ? "bg-white/75 shadow-xl shadow-zinc-900/4 backdrop-blur-2xl"
-                  : "bg-white/60 backdrop-blur-xl"
+                  ? "bg-background/85 shadow-xl shadow-black/50 backdrop-blur-2xl"
+                  : "bg-background/60 backdrop-blur-xl"
               }`}
             >
               {/* Logo */}
@@ -133,46 +162,49 @@ export function Navbar() {
                   height={22}
                   priority
                 />
-                <span className="text-base leading-tight font-bold tracking-tight text-zinc-800 sm:text-lg">
+                <span className="text-base leading-tight font-bold tracking-tight text-foreground sm:text-lg">
                   {APP_NAME}
                 </span>
               </Link>
 
               {/* Desktop nav */}
               <div className="hidden items-center gap-0.5 md:flex">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="group relative px-4 py-2"
-                  >
-                    <span className="relative z-10 text-sm font-medium text-zinc-500 transition-colors duration-200 group-hover:text-zinc-900">
-                      {link.label}
-                    </span>
-                    {/* Hover pill bg */}
-                    <span className="absolute inset-0 scale-75 rounded-xl bg-zinc-900/4 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
-                    {/* Bottom indicator dot */}
-                    <span className="absolute bottom-0.5 left-1/2 size-1 -translate-x-1/2 scale-0 rounded-full bg-linear-to-r from-orange-400 to-rose-400 transition-transform duration-300 group-hover:scale-100" />
-                  </Link>
-                ))}
+                {navLinks.map((link) => {
+                  if (pathname && pathname !== "/") return;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="group relative px-4 py-2"
+                    >
+                      <span className="relative z-10 text-sm font-medium text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
+                        {link.label}
+                      </span>
+                      {/* Hover pill bg */}
+                      <span className="absolute inset-0 scale-75 rounded-xl bg-foreground/6 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
+                      {/* Bottom indicator dot */}
+                      <span className="absolute bottom-0.5 left-1/2 size-1 -translate-x-1/2 scale-0 rounded-full bg-linear-to-r from-primary to-primary/60 transition-transform duration-300 group-hover:scale-100" />
+                    </Link>
+                  );
+                })}
 
                 {/* Separator */}
-                <div className="mx-2.5 h-5 w-px bg-linear-to-b from-transparent via-zinc-300 to-transparent" />
+                <div className="mx-2.5 h-5 w-px bg-linear-to-b from-transparent via-border to-transparent" />
 
                 {/* GitHub star button */}
                 <a
                   href={APP_GITHUB_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-zinc-400 transition-all duration-200 hover:text-zinc-700"
+                  className="group relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-muted-foreground transition-all duration-200 hover:text-foreground"
                   aria-label="Star on GitHub"
                 >
-                  <span className="absolute inset-0 scale-75 rounded-xl bg-zinc-900/4 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
+                  <span className="absolute inset-0 scale-75 rounded-xl bg-foreground/6 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                   <Github size={17} className="relative z-10" />
                 </a>
 
                 {/* Separator */}
-                <div className="mx-2.5 h-5 w-px bg-linear-to-b from-transparent via-zinc-300 to-transparent" />
+                <div className="mx-2.5 h-5 w-px bg-linear-to-b from-transparent via-border to-transparent" />
 
                 {/* CTA or Profile */}
                 {user ? (
@@ -194,7 +226,10 @@ export function Navbar() {
                         aria-label="User menu actions"
                         className="w-64 p-2"
                         onAction={(key) => {
-                          if (key === "upgrade") router.push("/#pricing");
+                          if (key === "upgrade")
+                            if (pro.isActive)
+                              return router.push("/dashboard/billing");
+                          router.push("/checkout", { external: true });
                           if (key === "editor") router.push("/editor");
                           if (key === "dashboard") router.push("/dashboard");
                           if (key === "logout") {
@@ -210,18 +245,18 @@ export function Navbar() {
                           textValue="Profile"
                           className="p-0 mb-2 opacity-100 data-[hover=true]:bg-transparent"
                         >
-                          <div className="flex w-full items-center justify-between rounded-2xl border border-zinc-200/80 bg-white p-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                          <div className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-surface-muted/40 p-3">
                             <div className="flex flex-col gap-0.5">
-                              <span className="text-[14px] font-bold text-zinc-900">
+                              <span className="text-[14px] font-bold text-foreground">
                                 {user.user_metadata?.full_name || "My Account"}
                               </span>
-                              <span className="text-[13px] font-medium text-zinc-500 truncate max-w-35">
+                              <span className="text-[13px] font-medium text-muted-foreground truncate max-w-35">
                                 {user.email}
                               </span>
                             </div>
                             <Avatar
                               size="sm"
-                              className="shrink-0 shadow-sm ring-1 ring-zinc-200/50"
+                              className="shrink-0 shadow-sm ring-1 ring-border/60"
                             >
                               <Avatar.Image
                                 src={user.user_metadata?.avatar_url}
@@ -236,14 +271,14 @@ export function Navbar() {
                         <Dropdown.Item
                           id="dashboard"
                           textValue="Dashboard"
-                          className="p-0 rounded-xl mb-1 data-[hover=true]:bg-zinc-100/80"
+                          className="p-0 rounded-xl mb-1 data-[hover=true]:bg-foreground/6"
                         >
                           <div className="flex w-full items-center gap-2.5 px-3 py-2 cursor-pointer">
                             <Home
-                              className="size-4.5 text-zinc-700 shrink-0"
+                              className="size-4.5 text-muted-foreground shrink-0"
                               strokeWidth={1.8}
                             />
-                            <span className="text-[14px] font-medium text-zinc-800">
+                            <span className="text-[14px] font-medium text-foreground">
                               Dashboard
                             </span>
                           </div>
@@ -252,14 +287,14 @@ export function Navbar() {
                         <Dropdown.Item
                           id="editor"
                           textValue="Open Editor"
-                          className="p-0 rounded-xl mb-1 data-[hover=true]:bg-zinc-100/80"
+                          className="p-0 rounded-xl mb-1 data-[hover=true]:bg-foreground/6"
                         >
                           <div className="flex w-full items-center gap-2.5 px-3 py-2 cursor-pointer">
-                            <LayoutTemplate
-                              className="size-4.5 text-zinc-700 shrink-0"
+                            <PanelsRightBottomIcon
+                              className="size-4.5 text-muted-foreground shrink-0"
                               strokeWidth={1.8}
                             />
-                            <span className="text-[14px] font-medium text-zinc-800">
+                            <span className="text-[14px] font-medium text-foreground">
                               Open Editor
                             </span>
                           </div>
@@ -268,30 +303,30 @@ export function Navbar() {
                         <Dropdown.Item
                           id="upgrade"
                           textValue="Subscription"
-                          className="p-0 rounded-xl mb-1 data-[hover=true]:bg-zinc-100/80"
+                          className="p-0 rounded-xl mb-1 data-[hover=true]:bg-foreground/6"
                         >
                           <div className="flex w-full items-center justify-between px-3 py-2 cursor-pointer">
                             <div className="flex items-center gap-2.5">
                               <CreditCard
-                                className="size-4.5 text-zinc-700 shrink-0"
+                                className="size-4.5 text-muted-foreground shrink-0"
                                 strokeWidth={1.8}
                               />
-                              <span className="text-[14px] font-medium text-zinc-800">
+                              <span className="text-[14px] font-medium text-foreground">
                                 Subscription
                               </span>
                             </div>
                             {pro.type === "pro" ? (
-                              <span className="flex items-center gap-1 rounded bg-green-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-green-700">
+                              <span className="flex items-center gap-1 rounded bg-success-soft px-2 py-0.5 text-[10px] font-bold tracking-widest text-success">
                                 <Zap className="size-3 fill-current" />
                                 PRO
                               </span>
                             ) : pro.type === "trial" ? (
-                              <span className="flex items-center gap-1 rounded bg-cyan-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-cyan-700">
+                              <span className="flex items-center gap-1 rounded bg-accent-soft px-2 py-0.5 text-[10px] font-bold tracking-widest text-primary">
                                 <Sparkles className="size-3" />
                                 Trial
                               </span>
                             ) : (
-                              <span className="flex items-center gap-1 rounded bg-fuchsia-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-fuchsia-700">
+                              <span className="flex items-center gap-1 rounded bg-primary/15 px-2 py-0.5 text-[10px] font-bold tracking-widest text-primary">
                                 <Sparkles className="size-3" />
                                 UPGRADE
                               </span>
@@ -302,14 +337,14 @@ export function Navbar() {
                         <Dropdown.Item
                           id="logout"
                           textValue="Sign out"
-                          className="p-0 rounded-xl data-[hover=true]:bg-zinc-100/80 mt-1 border-t border-zinc-100"
+                          className="p-0 rounded-xl data-[hover=true]:bg-foreground/6 mt-1 text-danger border-y border-danger-soft bg-danger/5 hover:bg-danger/10"
                         >
                           <div className="flex w-full items-center gap-2.5 px-3 py-2 cursor-pointer">
                             <LogOut
-                              className="size-4.5 text-zinc-700 shrink-0"
+                              className="size-4.5 shrink-0"
                               strokeWidth={1.8}
                             />
-                            <span className="text-[14px] font-medium text-zinc-800">
+                            <span className="text-[14px] font-medium">
                               Sign out
                             </span>
                           </div>
@@ -320,15 +355,15 @@ export function Navbar() {
                 ) : (
                   <div className="group relative">
                     {/* Outer glow on hover */}
-                    <div className="absolute -inset-1.5 rounded-2xl bg-linear-to-r from-orange-400 via-rose-400 to-violet-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-50" />
+                    <div className="absolute -inset-1.5 rounded-2xl bg-linear-to-r from-primary via-primary/60 to-accent-soft opacity-0 blur-xl transition-all duration-500 group-hover:opacity-50" />
                     <Button
                       onPress={() => router.push("/login")}
                       variant="primary"
                       size="sm"
-                      className="relative overflow-hidden bg-zinc-900 font-semibold text-white shadow-lg shadow-zinc-900/20 transition-shadow duration-300 hover:shadow-xl hover:shadow-zinc-900/30"
+                      className="relative overflow-hidden bg-foreground font-semibold text-background shadow-lg shadow-foreground/10 transition-shadow duration-300 hover:shadow-xl hover:shadow-foreground/20"
                     >
                       {/* Shimmer sweep */}
-                      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-foreground/40 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                       <span className="relative z-10">Log in</span>
                     </Button>
                   </div>
@@ -338,7 +373,7 @@ export function Navbar() {
               {/* Mobile toggle */}
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="relative flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-xl text-zinc-600 transition-colors hover:bg-zinc-100/80 md:hidden"
+                className="relative flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-xl text-muted-foreground transition-colors hover:bg-foreground/6 md:hidden"
                 aria-label="Toggle menu"
               >
                 <span
@@ -364,68 +399,166 @@ export function Navbar() {
           <AnimatePresence>
             {mobileOpen && (
               <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                initial={{ opacity: 0, y: -10, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                exit={{ opacity: 0, y: -10, scale: 0.96 }}
+                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                 className="relative mt-2"
               >
                 {/* Border */}
-                <div className="absolute -inset-px rounded-2xl bg-linear-to-b from-zinc-200/60 to-zinc-200/30" />
-                <div className="relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-2xl shadow-zinc-900/6 backdrop-blur-2xl">
-                  <div className="flex flex-col gap-1">
-                    {navLinks.map((link, i) => (
-                      <motion.div
-                        key={link.href}
-                        initial={{ opacity: 0, x: -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 + 0.1 }}
+                <div className="absolute -inset-px rounded-3xl bg-linear-to-b from-border/80 to-border/30" />
+                <div className="relative overflow-hidden rounded-3xl bg-background/95 p-3 shadow-2xl shadow-black/60 backdrop-blur-2xl">
+                  {/* top sheen */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-6 top-0 h-px bg-linear-to-r from-transparent via-foreground/10 to-transparent"
+                  />
+
+                  {/* Logged-in mini profile */}
+                  {user && (
+                    <div className="mb-2 flex items-center gap-3 rounded-2xl border border-border/70 bg-surface-muted/40 p-3">
+                      <Avatar
+                        size="sm"
+                        className="shrink-0 shadow-sm ring-1 ring-border/60"
                       >
-                        <Link
-                          href={link.href}
-                          onClick={() => setMobileOpen(false)}
-                          className="flex items-center rounded-xl px-4 py-3 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100/80 hover:text-zinc-900"
+                        <Avatar.Image src={user.user_metadata?.avatar_url} />
+                        <Avatar.Fallback>
+                          {user.email?.charAt(0).toUpperCase()}
+                        </Avatar.Fallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[14px] font-semibold text-foreground">
+                          {user.user_metadata?.full_name || "My Account"}
+                        </p>
+                        <p className="truncate text-[12px] text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                      <span
+                        className={`rounded-md px-2 py-0.5 text-[9px] font-bold tracking-widest ${
+                          pro.type === "pro"
+                            ? "bg-success-soft text-success"
+                            : pro.type === "trial"
+                              ? "bg-accent-soft text-primary"
+                              : "bg-border/50 text-muted-foreground"
+                        }`}
+                      >
+                        {pro.type === "pro"
+                          ? "PRO"
+                          : pro.type === "trial"
+                            ? "TRIAL"
+                            : "FREE"}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-0.5 p-1">
+                    {/* Section label */}
+                    <p className="px-2 pt-1 pb-1.5 text-[10px] font-bold tracking-[0.14em] text-muted-foreground/60 uppercase">
+                      {user ? "Explore" : "Menu"}
+                    </p>
+
+                    {navLinks.map((link, i) => {
+                      const Icon = link.icon ?? ChevronRight;
+                      return (
+                        <motion.div
+                          key={link.href}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 + 0.08 }}
                         >
-                          {link.label}
-                        </Link>
-                      </motion.div>
-                    ))}
+                          <Link
+                            href={link.href}
+                            onClick={() => setMobileOpen(false)}
+                            className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-foreground/6"
+                          >
+                            <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-border/70 bg-surface-muted/50 text-muted-foreground transition-colors group-hover:text-foreground">
+                              <Icon className="size-4" strokeWidth={1.8} />
+                            </span>
+                            <span className="flex-1 text-[14px] font-medium text-foreground/90">
+                              {link.label}
+                            </span>
+                            <ChevronRight className="size-4 text-muted-foreground/50 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-foreground" />
+                          </Link>
+                        </motion.div>
+                      );
+                    })}
+
+                    {/* GitHub */}
                     <motion.div
-                      initial={{ opacity: 0, x: -12 }}
+                      initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.15 }}
+                      transition={{ delay: navLinks.length * 0.05 + 0.1 }}
                     >
                       <a
                         href={APP_GITHUB_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100/80 hover:text-zinc-900"
+                        className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-foreground/6"
                       >
-                        <Github size={16} />
-                        GitHub
+                        <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-border/70 bg-surface-muted/50 text-muted-foreground transition-colors group-hover:text-foreground">
+                          <Github className="size-4" />
+                        </span>
+                        <span className="flex-1 text-[14px] font-medium text-foreground/90">
+                          GitHub
+                        </span>
+                        <ChevronRight className="size-4 text-muted-foreground/50 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-foreground" />
                       </a>
                     </motion.div>
+                  </div>
 
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.25 }}
-                      className="pt-2"
-                    >
-                      <div className="mb-3 h-px bg-linear-to-r from-transparent via-zinc-200 to-transparent" />
+                  {/* Footer */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.22 }}
+                    className="p-1"
+                  >
+                    <div className="mb-2.5 mt-1 h-px bg-linear-to-r from-transparent via-border to-transparent" />
+                    {user ? (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="primary"
+                          fullWidth
+                          className="bg-foreground font-semibold text-background"
+                          onPress={() => {
+                            router.push("/dashboard");
+                            setMobileOpen(false);
+                          }}
+                        >
+                          <Home className="size-4" />
+                          Dashboard
+                        </Button>
+                        <Button
+                          variant="primary"
+                          fullWidth
+                          className="border border-danger/40 bg-danger/10 font-semibold text-danger"
+                          onPress={() => {
+                            supabase.auth.signOut().then(() => {
+                              setUser(null);
+                              setMobileOpen(false);
+                              router.push("/");
+                            });
+                          }}
+                        >
+                          <LogOut className="size-4" />
+                          Sign out
+                        </Button>
+                      </div>
+                    ) : (
                       <Button
                         variant="primary"
                         fullWidth
-                        className="bg-zinc-900 font-semibold text-white"
+                        className="bg-foreground font-semibold text-background"
                         onPress={() => {
-                          router.push(user ? "/editor" : "/login");
+                          router.push("/login");
                           setMobileOpen(false);
                         }}
                       >
-                        {user ? "Open Editor" : "Log in"}
+                        Log in
                       </Button>
-                    </motion.div>
-                  </div>
+                    )}
+                  </motion.div>
                 </div>
               </motion.div>
             )}

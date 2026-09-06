@@ -32,27 +32,3 @@ ON CONFLICT (id) DO NOTHING;
 -- Enable RLS for the storage bucket objects
 CREATE POLICY "Public Access" ON storage.objects
     FOR SELECT USING (bucket_id = 'prettyshot');
-
-CREATE POLICY "Users can upload to their own folder" ON storage.objects
-    FOR INSERT WITH CHECK (
-        bucket_id = 'prettyshot' AND 
-        auth.role() = 'authenticated' AND
-        (storage.foldername(name))[1] = 'design-images' AND
-        (storage.foldername(name))[2] = auth.uid()::text
-    );
-
-CREATE POLICY "Users can update their own folder" ON storage.objects
-    FOR UPDATE USING (
-        bucket_id = 'prettyshot' AND 
-        auth.role() = 'authenticated' AND
-        (storage.foldername(name))[1] = 'design-images' AND
-        (storage.foldername(name))[2] = auth.uid()::text
-    );
-
-CREATE POLICY "Users can delete their own folder" ON storage.objects
-    FOR DELETE USING (
-        bucket_id = 'prettyshot' AND 
-        auth.role() = 'authenticated' AND
-        (storage.foldername(name))[1] = 'design-images' AND
-        (storage.foldername(name))[2] = auth.uid()::text
-    );

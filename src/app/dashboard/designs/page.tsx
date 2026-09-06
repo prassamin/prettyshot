@@ -2,14 +2,13 @@ import { createServerClient } from "@/lib/supabase/server";
 import AllDesignsPageView from "./view";
 import { metatag } from "@/lib/metatag";
 
+import { isPro } from "@/lib/utils";
+
 export default async function AllDesignsPage() {
   const supabase = await createServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isTrialActive = user?.user_metadata?.trial_ends_at
-    ? new Date(user.user_metadata.trial_ends_at) > new Date()
-    : false;
 
   let designs: {
     id: string;
@@ -17,13 +16,16 @@ export default async function AllDesignsPage() {
     updated_at: string;
     config: Record<string, any>;
   }[] = [];
-  if (user?.user_metadata?.is_pro === true || isTrialActive) {
-    const { data } = await supabase
-      .from("designs")
-      .select("id, name, updated_at, config")
-      .eq("user_id", user?.id)
-      .order("updated_at", { ascending: false });
-    designs = data || [];
+
+  if (user) {
+    if (isPro(user).isActive) {
+      const { data } = await supabase
+        .from("designs")
+        .select("id, name, updated_at, config")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false });
+      designs = data || [];
+    }
   }
 
   return <AllDesignsPageView designs={designs} />;

@@ -1,138 +1,255 @@
 "use client";
 
-import { useState } from "react";
-import { type Background, updateBackground, deleteBackground } from "@/app/actions/backgrounds";
-import { Button } from "@heroui/react";
-import { Edit2, Trash2, Check, X, ShieldAlert, Loader2 } from "lucide-react";
+import * as React from "react";
+import { motion } from "framer-motion";
+import {
+  Grid2x2,
+  Image as ImageIcon,
+  Layers,
+  Pencil,
+  ShieldAlert,
+  Trash,
+} from "lucide-react";
+import { toast } from "@heroui/react";
+import { useConfirm } from "@/components/confirm-provider";
+import { cn } from "@/lib/utils";
 
-export function BackgroundsList({ initialBackgrounds }: { initialBackgrounds: Background[] }) {
-  const [backgrounds, setBackgrounds] = useState<Background[]>(initialBackgrounds);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ name: string; category: string; is_free: boolean }>({ name: "", category: "mesh", is_free: false });
-  const [loading, setLoading] = useState(false);
+import { type Background, deleteBackground } from "@/app/actions/backgrounds";
+import { EditBackgroundModal } from "./edit-background-modal";
 
-  const startEdit = (bg: Background) => {
-    setEditingId(bg.id);
-    setEditForm({ name: bg.name, category: bg.category, is_free: bg.is_free });
+export function BackgroundsList({
+  initialBackgrounds,
+  onBackgroundsUpdate,
+}: {
+  initialBackgrounds: Background[];
+  onBackgroundsUpdate?: (backgrounds: Background[]) => void;
+}) {
+  const [backgrounds, setBackgrounds] = React.useState(initialBackgrounds);
+  const [editing, setEditing] = React.useState<Background | null>(null);
+  const { confirm } = useConfirm();
+
+  const commit = React.useCallback(
+    (next: Background[]) => {
+      setBackgrounds(next);
+      onBackgroundsUpdate?.(next);
+    },
+    [onBackgroundsUpdate],
+  );
+
+  const handleSaved = (updated: Background) => {
+    commit(backgrounds.map((b) => (b.id === updated.id ? updated : b)));
   };
 
-  const handleSave = async (id: string) => {
-    setLoading(true);
-    try {
-      await updateBackground(id, editForm);
-      setBackgrounds(backgrounds.map(b => b.id === id ? { ...b, ...editForm } as Background : b));
-      setEditingId(null);
-    } catch (e: any) {
-      alert(e.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleDelete = (bg: Background) => {
+    void confirm({
+      title: "Delete background",
+      description: `Are you sure you want to delete "${bg.name}"? This cannot be undone.`,
+      isDanger: true,
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          await deleteBackground(bg.id);
+          commit(backgrounds.filter((b) => b.id !== bg.id));
+          toast.success("Background deleted");
+        } catch (e: any) {
+          toast.danger(e.message || "Failed to delete background");
+        }
+      },
+    });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this background? This cannot be undone.")) return;
-    try {
-      await deleteBackground(id);
-      setBackgrounds(backgrounds.filter(b => b.id !== id));
-    } catch (e: any) {
-      alert(e.message);
-    }
-  };
+  const meshCount = backgrounds.filter((b) => b.category === "mesh").length;
+  const imageCount = backgrounds.filter((b) => b.category === "image").length;
+  const premiumCount = backgrounds.filter((b) => !b.is_free).length;
 
   if (backgrounds.length === 0) {
-    return <div className="p-8 text-center text-sm text-zinc-500">No backgrounds uploaded yet.</div>;
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border/50 bg-surface/50 px-6 py-16 text-center">
+        <div className="grid size-12 place-items-center rounded-2xl bg-muted/30">
+          <ImageIcon className="size-6 text-muted-foreground" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            No backgrounds uploaded yet
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Upload your first background using the form above.
+          </p>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left">
-        <thead className="text-xs text-zinc-500 uppercase bg-zinc-50/50 border-b border-zinc-100">
-          <tr>
-            <th className="px-6 py-3 font-semibold">Preview</th>
-            <th className="px-6 py-3 font-semibold">Details</th>
-            <th className="px-6 py-3 font-semibold text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100">
-          {backgrounds.map((bg) => (
-            <tr key={bg.id} className="bg-white hover:bg-zinc-50/50 transition-colors">
-              <td className="px-6 py-4 w-32">
-                <div className="size-16 rounded-lg border border-zinc-200 overflow-hidden bg-zinc-100 flex items-center justify-center relative">
-                  {bg.thumbnail_url ? (
-                    <img src={bg.thumbnail_url} alt={bg.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-xs text-zinc-400">No img</span>
-                  )}
-                  {!bg.is_free && (
-                    <div className="absolute top-1 right-1 size-4 bg-rose-500 rounded-full flex items-center justify-center text-white" title="Premium">
-                      <ShieldAlert className="size-2.5" />
-                    </div>
-                  )}
-                </div>
-              </td>
-              
-              <td className="px-6 py-4">
-                {editingId === bg.id ? (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={editForm.name}
-                      onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-sm"
-                    />
-                    <div className="flex gap-4">
-                      <select
-                        value={editForm.category}
-                        onChange={e => setEditForm({ ...editForm, category: e.target.value as any })}
-                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm"
-                      >
-                        <option value="mesh">Mesh</option>
-                        <option value="image">Image</option>
-                      </select>
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={editForm.is_free}
-                          onChange={e => setEditForm({ ...editForm, is_free: e.target.checked })}
-                          className="rounded border-zinc-300"
-                        />
-                        Is Free
-                      </label>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="font-bold text-zinc-900">{bg.name}</div>
-                    <div className="text-zinc-500 text-xs mt-1 capitalize">{bg.category} • {bg.is_free ? "Free" : "Premium"}</div>
-                  </div>
-                )}
-              </td>
+  const categories: { id: Background["category"]; label: string }[] = [
+    { id: "mesh", label: "Mesh" },
+    { id: "image", label: "Image" },
+  ];
 
-              <td className="px-6 py-4 text-right space-x-2">
-                {editingId === bg.id ? (
-                  <>
-                    <Button size="sm" variant="ghost" isPending={loading} onPress={() => handleSave(bg.id)} isIconOnly>
-                      {loading ? <Loader2 className="size-4 animate-spin" size="sm" /> : <Check className="size-4" />}
-                    </Button>
-                    <Button size="sm" variant="ghost" onPress={() => setEditingId(null)} isIconOnly>
-                      <X className="size-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button size="sm" variant="ghost" onPress={() => startEdit(bg)} isIconOnly>
-                      <Edit2 className="size-4 text-zinc-500" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onPress={() => handleDelete(bg.id)} isIconOnly>
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </>
+  return (
+    <div className="space-y-8">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {[
+          {
+            label: "Total",
+            value: backgrounds.length,
+            icon: Layers,
+            tint: "text-primary bg-primary/10",
+          },
+          {
+            label: "Mesh",
+            value: meshCount,
+            icon: Grid2x2,
+            tint: "text-warning bg-warning/10",
+          },
+          {
+            label: "Images",
+            value: imageCount,
+            icon: ImageIcon,
+            tint: "text-success bg-success/10",
+          },
+          {
+            label: "Premium",
+            value: premiumCount,
+            icon: ShieldAlert,
+            tint: "text-danger bg-danger/10",
+          },
+        ].map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="group relative overflow-hidden rounded-2xl border border-border/50 bg-surface-muted/50 p-3.5 transition-colors hover:border-border/80"
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "grid size-7 place-items-center rounded-lg",
+                  s.tint,
                 )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              >
+                <s.icon className="size-3.5" />
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                {s.label}
+              </span>
+            </div>
+            <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-foreground">
+              {s.value}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Category groups */}
+      {categories.map((category) => {
+        const items = backgrounds.filter((b) => b.category === category.id);
+        if (items.length === 0) return null;
+
+        return (
+          <motion.section
+            key={category.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-3"
+          >
+            {/* Category header */}
+            <div className="group flex items-center gap-3">
+              <span className="grid size-9 place-items-center overflow-hidden rounded-xl border border-border/50 bg-linear-to-br from-primary/25 to-muted shadow-sm">
+                <Layers className="size-4 text-muted-foreground" />
+              </span>
+              <h3 className="text-sm font-bold tracking-tight text-foreground">
+                {category.label}
+              </h3>
+              <div className="h-px flex-1 bg-border/40" />
+              <span className="rounded-full border border-border/40 bg-muted/10 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                {items.length} {items.length === 1 ? "asset" : "assets"}
+              </span>
+            </div>
+
+            {/* Asset cards */}
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+              {items.map((bg, fi) => (
+                <motion.div
+                  key={bg.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: fi * 0.04 }}
+                  className="group relative overflow-hidden rounded-2xl border border-border/50 bg-surface-muted/50 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
+                >
+                  {/* Preview stage */}
+                  <div className="relative flex items-center justify-center overflow-hidden bg-background">
+                    {/* Subtle grid backdrop */}
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(color-mix(in_oklab,var(--foreground)_4%,transparent)_1px,transparent_1px)] bg-size-[18px_18px]" />
+
+                    {bg.thumbnail ? (
+                      <img
+                        key={bg.thumbnail}
+                        src={bg.thumbnail}
+                        alt={bg.name}
+                        loading="lazy"
+                        className="relative z-10 max-h-full object-contain shadow-sm"
+                      />
+                    ) : (
+                      <div className="relative z-10 grid place-items-center">
+                        <ImageIcon className="size-10 text-muted-foreground/30" />
+                      </div>
+                    )}
+
+                    {/* Premium badge */}
+                    {!bg.is_free && (
+                      <span className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-md bg-danger/85 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-foreground backdrop-blur-sm">
+                        <ShieldAlert className="size-2.5" />
+                        Pro
+                      </span>
+                    )}
+
+                    {/* Hover actions */}
+                    <div className="absolute inset-0 z-20 flex items-start justify-end gap-1.5 bg-linear-to-b from-overlay/60 via-transparent to-transparent p-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(bg)}
+                        className="grid size-7 cursor-pointer place-items-center rounded-lg border border-foreground/20 bg-overlay/70 text-foreground/80 backdrop-blur-sm transition-colors hover:bg-primary hover:text-foreground"
+                        title="Edit background"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(bg)}
+                        className="grid size-7 cursor-pointer place-items-center rounded-lg border border-foreground/20 bg-overlay/70 text-foreground/80 backdrop-blur-sm transition-colors hover:bg-danger hover:text-foreground"
+                        title="Delete background"
+                      >
+                        <Trash className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card footer */}
+                  <div className="flex items-center justify-between gap-2 p-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-foreground transition-colors group-hover:text-primary">
+                        {bg.name}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        );
+      })}
+
+      {/* Edit modal */}
+      <EditBackgroundModal
+        background={editing}
+        isOpen={Boolean(editing)}
+        onClose={() => setEditing(null)}
+        onSaved={handleSaved}
+      />
     </div>
   );
 }
