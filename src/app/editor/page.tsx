@@ -3,8 +3,6 @@ import { redirect } from "next/navigation";
 
 import { metatag } from "@/lib/metatag";
 import { LOCAL_DESIGNS_COOKIE } from "@/editor/lib/local-design-storage";
-import { createServerClient } from "@/lib/supabase/server";
-import { isPro } from "@/lib/utils";
 
 export const generateMetadata = () => {
   return metatag({

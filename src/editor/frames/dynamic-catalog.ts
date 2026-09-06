@@ -9,7 +9,11 @@ import {
   type FrameGeometry,
 } from "@/app/actions/frames";
 import { BROWSER_FRAMES } from "./catalog";
-import type { DeviceOrientation, DeviceFrameModel, DeviceFrameVariant } from "./types";
+import type {
+  DeviceOrientation,
+  DeviceFrameModel,
+  DeviceFrameVariant,
+} from "./types";
 import type {
   FrameOption,
   FrameCategory,
@@ -388,7 +392,7 @@ export function lookupDynamicDeviceFrameVariant(
 
     const targetColor = variantId ? clean(variantId) : "";
 
-    // 1. Exact match with target color and orientation
+    // Exact match with target color and orientation
     const exactMatch =
       targetColor && orientation
         ? dynamicAssets.find(
@@ -399,15 +403,18 @@ export function lookupDynamicDeviceFrameVariant(
         : null;
     if (exactMatch) return exactMatch;
 
-    // 2. Exact color match
+    // Exact color match
     const colorMatch = targetColor
       ? dynamicAssets.find((a) => clean(a.variantId) === targetColor)
       : null;
-    if (colorMatch && (!orientation || colorMatch.orientation === orientation)) {
+    if (
+      colorMatch &&
+      (!orientation || colorMatch.orientation === orientation)
+    ) {
       return colorMatch;
     }
 
-    // 3. Partial/fuzzy color match (e.g. "black" matching "black_titanium" or "space_black")
+    // Partial/fuzzy color match (e.g. "black" matching "black_titanium" or "space_black")
     const partialMatch = targetColor
       ? dynamicAssets.find(
           (a) =>
@@ -416,7 +423,7 @@ export function lookupDynamicDeviceFrameVariant(
         )
       : null;
 
-    // 4. Orientation match or first available asset
+    // Orientation match or first available asset
     const baseAsset =
       colorMatch ??
       partialMatch ??

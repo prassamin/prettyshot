@@ -188,8 +188,8 @@ export function FeatureLock({
 
   // Block every interaction aimed at the locked subtree, from the parent —
   // children need zero changes. Two layers:
-  //   1. native capture listeners on the gated wrapper (beat React delegation)
-  //   2. a document-level capture guard so relocated children stay blocked
+  //   native capture listeners on the gated wrapper (beat React delegation)
+  //   a document-level capture guard so relocated children stay blocked
   //      (checks the `data-gated` ancestry marker)
   //
   // On an "intent" event (click / pointer-down / key press) the user is also

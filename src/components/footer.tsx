@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 import {
   APP_NAME,
   APP_GITHUB_URL,
@@ -14,18 +14,20 @@ import {
 import { Github } from "./icons/github";
 import { Twitter } from "./icons/twitter";
 
-const footerLinks = [
+const EASE = [0.16, 1, 0.3, 1] as const;
+
+const LINK_GROUPS = [
   {
     title: "Product",
     links: [
       { label: "Editor", href: "/editor" },
       { label: "Features", href: "#features" },
-      { label: "How it works", href: "#how-it-works" },
+      { label: "Pricing", href: "#pricing" },
       { label: "FAQ", href: "#faq" },
     ],
   },
   {
-    title: "Resources",
+    title: "Open Source",
     links: [
       { label: "GitHub", href: APP_GITHUB_URL, external: true },
       {
@@ -34,7 +36,7 @@ const footerLinks = [
         external: true,
       },
       {
-        label: "Request Feature",
+        label: "Request a Feature",
         href: `${APP_GITHUB_URL}/issues`,
         external: true,
       },
@@ -49,73 +51,114 @@ const footerLinks = [
   },
 ];
 
+const SOCIALS = [
+  { label: "GitHub", href: APP_GITHUB_URL, Icon: Github },
+  { label: "X / Twitter", href: "https://x.com/prassami", Icon: Twitter },
+];
+
 export function Footer() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <footer className="relative overflow-hidden bg-zinc-950">
-      {/* Top separator line */}
-      <div className="absolute top-0 left-1/2 h-px w-2/3 -translate-x-1/2 bg-linear-to-r from-transparent via-white/10 to-transparent" />
-
-      {/* Ambient glows */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute -bottom-40 left-1/4 size-125 rounded-full bg-orange-900/8 blur-[120px]" />
-        <div className="absolute -bottom-40 right-1/4 size-125 rounded-full bg-violet-900/8 blur-[120px]" />
+    <footer className="relative overflow-hidden bg-background">
+      {/* ambient */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        {/* top warm wash behind the CTA band */}
+        <div className="absolute -top-40 left-1/2 h-105 w-250 -translate-x-1/2 rounded-full bg-primary/25 blur-[150px]" />
+        {/* left body glow */}
+        <div className="absolute top-1/3 -left-40 size-150 rounded-full bg-primary/15 blur-[150px]" />
+        {/* bottom-right bloom */}
+        <div className="absolute -right-32 -bottom-48 size-160 rounded-full bg-primary/15 blur-[160px]" />
       </div>
 
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="relative mx-auto max-w-6xl px-5 pt-16 pb-8"
+        transition={{ duration: 0.8, ease: EASE }}
+        className="relative mx-auto max-w-6xl px-5 pt-20 sm:pt-24"
       >
-        {/* Main grid */}
-        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+        {/* ── Big brand CTA band ── */}
+        <div className="flex flex-col items-start justify-between gap-8 pb-16">
+          <div>
+            <h2 className="font-display max-w-2xl text-[clamp(2rem,5vw,3.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-foreground">
+              Every screenshot deserves{" "}
+              <span className="relative inline-block whitespace-nowrap px-[0.18em]">
+                <span
+                  aria-hidden
+                  className="absolute inset-x-0 top-[12%] bottom-[6%] rounded-[0.2em] bg-primary/20"
+                />
+                <span className="relative text-primary">to be remembered.</span>
+              </span>
+            </h2>
+            <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
+              Free to start, no signup. Upgrade when you&apos;re ready. One
+              payment, lifetime access.
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/editor"
+              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-foreground px-7 text-[15px] font-semibold text-background transition-all duration-200 hover:shadow-lg active:scale-[0.98]"
+            >
+              Open the editor
+              <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* ── Link grid ── */}
+        <div className="grid gap-x-8 gap-y-12 py-14 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           {/* Brand column */}
-          <div className="lg:col-span-2">
-            <Link href="/" className="group inline-flex items-center gap-2.5">
-              <Image src="/prettyshot.svg" alt="" width={32} height={25} priority />
-              <span className="text-lg font-bold tracking-tight text-white">
+          <div>
+            <Link href="/" className="inline-flex items-center gap-2.5">
+              <Image
+                src="/prettyshot.svg"
+                alt=""
+                width={30}
+                height={24}
+                priority
+              />
+              <span className="font-display text-lg font-medium tracking-tight text-foreground">
                 {APP_NAME}
               </span>
             </Link>
-
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-zinc-500">
-              Make your screenshots look stunning in seconds. Free to start, no signup required.
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              The screenshot studio for makers. Frame, light and export
+              screenshots that look like product shots — all in the browser.
             </p>
 
-            {/* Social icons */}
-            <div className="mt-6 flex items-center gap-3">
-              <a
-                href={APP_GITHUB_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex size-10 items-center justify-center rounded-xl bg-white/4 ring-1 ring-white/6 transition-all duration-300 hover:bg-white/8 hover:ring-white/12"
-                aria-label="GitHub"
-              >
-                <Github className="size-4 text-zinc-500 transition-colors group-hover:text-white" />
-              </a>
-              <a
-                href="https://x.com/prassami"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex size-10 items-center justify-center rounded-xl bg-white/4 ring-1 ring-white/6 transition-all duration-300 hover:bg-white/8 hover:ring-white/12"
-                aria-label="Twitter"
-              >
-                <Twitter className="size-4 text-zinc-500 transition-colors group-hover:text-white" />
-              </a>
+            {/* Socials */}
+            <div className="mt-6 flex items-center gap-2.5">
+              {SOCIALS.map(({ label, href, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="grid size-10 place-items-center rounded-xl border border-border/70 bg-surface/40 text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary"
+                >
+                  <Icon className="size-4" />
+                </a>
+              ))}
             </div>
           </div>
 
           {/* Link columns */}
-          {footerLinks.map((group) => (
-            <div key={group.title}>
-              <h3 className="mb-4 text-xs font-bold tracking-widest text-zinc-400 uppercase">
+          {LINK_GROUPS.map((group, gi) => (
+            <motion.div
+              key={group.title}
+              initial={{ opacity: 0, y: 14 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.1 + gi * 0.08, ease: EASE }}
+            >
+              <h3 className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground/60 uppercase">
                 {group.title}
               </h3>
-              <ul className="space-y-3">
+              <ul className="mt-4 space-y-3">
                 {group.links.map((link) => (
                   <li key={link.label}>
                     {"external" in link && link.external ? (
@@ -123,7 +166,7 @@ export function Footer() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors duration-200 hover:text-white"
+                        className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
                       >
                         {link.label}
                         <svg
@@ -143,7 +186,7 @@ export function Footer() {
                     ) : (
                       <Link
                         href={link.href}
-                        className="text-sm text-zinc-500 transition-colors duration-200 hover:text-white"
+                        className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
                       >
                         {link.label}
                       </Link>
@@ -151,32 +194,32 @@ export function Footer() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
           ))}
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-14 border-t border-white/6 pt-6">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p className="text-xs text-zinc-600">
-              &copy; {new Date().getFullYear()} {APP_NAME}. Open source under
-              MIT.
-            </p>
+        <div className="h-px w-full bg-muted-foreground/10"/>
 
-            <p className="inline-flex items-center gap-1.5 text-xs text-zinc-600">
-              Made with
-              <Heart className="size-3 text-rose-500" fill="currentColor" />
-              by{" "}
-              <a
-                href={DEVELOPED_BY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-zinc-400 transition-colors hover:text-white"
-              >
-                {DEVELOPED_BY}
-              </a>
-            </p>
-          </div>
+        {/* ── Bottom bar ── */}
+        <div className="flex flex-col items-center justify-between gap-4 py-4 sm:flex-row">
+          <p className="text-xs text-muted-foreground/70">
+            &copy; {new Date().getFullYear()} {APP_NAME}. Open source under MIT
+            license.
+          </p>
+
+          <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/70">
+            Made with
+            <Heart className="size-3 text-danger" fill="currentColor" />
+            by{" "}
+            <a
+              href={DEVELOPED_BY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground/80 transition-colors hover:text-foreground"
+            >
+              {DEVELOPED_BY}
+            </a>
+          </p>
         </div>
       </motion.div>
     </footer>

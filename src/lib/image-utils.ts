@@ -74,7 +74,8 @@ export async function uploadImageDeduplicated(
   if (dataUrl.startsWith("http")) return dataUrl;
 
   const cacheKey = designId ? `${designId}:${dataUrl}` : dataUrl;
-  const cached = memoryUploadCache.get(cacheKey) || memoryUploadCache.get(dataUrl);
+  const cached =
+    memoryUploadCache.get(cacheKey) || memoryUploadCache.get(dataUrl);
   if (cached) return cached;
 
   if (inFlightUploads.has(cacheKey)) {
@@ -157,13 +158,16 @@ export async function uploadImageDeduplicated(
 /**
  * Deletes an old user design asset from Cloudinary in the background.
  */
-export async function deleteDesignAsset(urlOrPublicId: string): Promise<boolean> {
+export async function deleteDesignAsset(
+  urlOrPublicId: string,
+): Promise<boolean> {
   if (!urlOrPublicId) return false;
   if (deletedOrPendingDeletion.has(urlOrPublicId)) return true;
   deletedOrPendingDeletion.add(urlOrPublicId);
 
   try {
-    const { deleteDesignAssetAction } = await import("@/app/actions/design-upload");
+    const { deleteDesignAssetAction } =
+      await import("@/app/actions/design-upload");
     const res = await deleteDesignAssetAction(urlOrPublicId);
     return res.success;
   } catch (err) {
@@ -186,13 +190,13 @@ export async function replaceImageDeduplicated(
   // If it's already an uploaded URL, return it
   if (newDataUrl.startsWith("http")) return newDataUrl;
 
-  // 1. Check memory cache first
+  // Check memory cache first
   const cached = memoryUploadCache.get(newDataUrl);
   if (cached && cached === oldUrlOrPublicId) {
     return cached;
   }
 
-  // 2. Compress & hash newDataUrl to know its public_id before doing anything
+  // Compress & hash newDataUrl to know its public_id before doing anything
   const webpDataUrl = await compressToWebP(newDataUrl, 0.8);
   const blob = dataURLtoBlob(webpDataUrl);
   const newHash = await hashBlob(blob);

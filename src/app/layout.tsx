@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Fredoka } from "next/font/google";
+import { Fredoka, Geist } from "next/font/google";
 import { Providers } from "@/providers/providers";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { APP_NAME, DEVELOPED_BY, DEVELOPED_BY_URL } from "@/config";
-import { getOrigin } from "@/lib/url";
+import { getCurrentUrl, getOrigin } from "@/lib/url";
 import { createServerClient } from "@/lib/supabase/server";
 
 const fredoka = Fredoka({ subsets: ["latin"], variable: "--font-fredoka" });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -80,6 +81,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = new URL(await getCurrentUrl()).pathname;
   const supabase = await createServerClient();
   const {
     data: { user },
@@ -91,7 +93,8 @@ export default async function RootLayout({
       .eq("id", user.id)
       .single();
 
-    const rawTrial = profile?.trial_ends_at || user.user_metadata?.trial_ends_at;
+    const rawTrial =
+      profile?.trial_ends_at || user.user_metadata?.trial_ends_at;
     const isTrialActive = rawTrial ? new Date(rawTrial) > new Date() : false;
     const isUserPro =
       profile?.is_pro === true ||
@@ -108,7 +111,8 @@ export default async function RootLayout({
       lang="en"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={cn("dark", fredoka.variable)}
+      data-route={pathname}
+      className={cn("dark", fredoka.variable, geist.variable)}
     >
       <body className={cn("antialiased")}>
         <Providers user={user as any}>{children}</Providers>

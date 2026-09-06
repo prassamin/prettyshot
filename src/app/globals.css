@@ -57,6 +57,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   --font-sans: var(--font-fredoka);
+  --font-display: var(--font-geist);
 }
 
 :root,
@@ -251,4 +252,3 @@
   initial-value: 0deg;
   inherits: false;
 }
-

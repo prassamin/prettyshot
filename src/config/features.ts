@@ -28,7 +28,7 @@ export type FeatureTier = "free" | "pro";
 export type FeatureId =
   // ── Core canvas ────────────────────────────────────────────────
   | "core.multiSlot" // 2nd/3rd screenshot boxes (slots)
-  
+
   // ── Aspect ratio ───────────────────────────────────────────────
   | "aspect.presets" // twitter/instagram/linkedin/social sets
   | "aspect.basic" // auto, 16:9, 1:1, 9:16, 4:3
@@ -44,7 +44,7 @@ export type FeatureId =
   | "backgrounds.upload" // the custom image upload control
 
   // ── Backdrop / overlays ────────────────────────────────────────
-  | "backdrop.shadow" 
+  | "backdrop.shadow"
   | "backdrop.lighting"
   | "backdrop.adjustments"
   | "backdrop.filters" // gradient overlays, patterns
@@ -52,7 +52,7 @@ export type FeatureId =
   // ── Transformations ───────────────────────────────────────────
   | "transform.tilt"
   | "transform.layout"
-  
+
   // ── Shadows ───────────────────────────────────────────────────
   | "shadow"
 
@@ -63,7 +63,6 @@ export type FeatureId =
   | "elements.annotations" // draw, shapes
   | "elements.text" // text tool
   | "elements.assets" // image assets
-
 
   // ── Export ─────────────────────────────────────────────────────
   | "export.png" // PNG
@@ -79,7 +78,7 @@ export type FeatureId =
 
   // ── Cloud / brand ──────────────────────────────────────────────
   | "cloud.sync" // cloud autosave + designs across devices
-  | "brand.watermark" // remove PrettyShot watermark from exports
+  | "brand.watermark"; // remove PrettyShot watermark from exports
 
 /**
  * The tier of every feature. THIS is the array you edit to make a feature
@@ -90,7 +89,7 @@ export type FeatureId =
 export const FEATURES: Record<FeatureId, FeatureTier> = {
   // Core canvas — the product's essence stays free
   "core.multiSlot": "pro",
-  
+
   // Aspect
   "aspect.basic": "free",
   "aspect.presets": "pro",
@@ -101,7 +100,7 @@ export const FEATURES: Record<FeatureId, FeatureTier> = {
 
   // Backgrounds — the whole section is one feature; per-asset free/paid is
   // decided by the DB `is_free` flag, not here.
-  "backgrounds": "free",
+  backgrounds: "free",
   "backgrounds.colorpicker": "pro",
   "backgrounds.noise": "free",
   "backgrounds.upload": "pro",
@@ -117,10 +116,10 @@ export const FEATURES: Record<FeatureId, FeatureTier> = {
   "transform.layout": "pro",
 
   // Shadows
-  "shadow": "pro",
+  shadow: "pro",
 
   // Borders
-  "border": "pro",
+  border: "pro",
 
   // Elements
   "elements.annotations": "pro",
@@ -128,7 +127,7 @@ export const FEATURES: Record<FeatureId, FeatureTier> = {
   "elements.assets": "pro",
 
   // Animation
-  "animate": "pro",
+  animate: "pro",
 
   // Export
   "export.png": "free",
@@ -151,17 +150,18 @@ export const FEATURES: Record<FeatureId, FeatureTier> = {
 export const FEATURE_DESCRIPTIONS: Record<FeatureId, string | null> = {
   // Core canvas
   "core.multiSlot": "Add multiple screenshot boxes to one canvas.",
-  
+
   // Aspect
   "aspect.basic": null,
-  "aspect.presets": "Social platform presets — Twitter, Instagram, LinkedIn and more.",
+  "aspect.presets":
+    "Social platform presets — Twitter, Instagram, LinkedIn and more.",
   "aspect.custom": "Set any custom aspect ratio for your canvas.",
 
   // Frames
   "frames.hardcoded": null,
 
   // Backgrounds
-  "backgrounds": null,
+  backgrounds: null,
   "backgrounds.colorpicker": "Pick any custom color for your background.",
   "backgrounds.noise": null,
   "backgrounds.upload": "Upload your own background images from this device.",
@@ -177,10 +177,10 @@ export const FEATURE_DESCRIPTIONS: Record<FeatureId, string | null> = {
   "transform.layout": null,
 
   // Shadow
-  "shadow": null,
+  shadow: null,
 
   // Borders
-  "border": null,
+  border: null,
 
   // Elements
   "elements.annotations": null,
@@ -197,9 +197,37 @@ export const FEATURE_DESCRIPTIONS: Record<FeatureId, string | null> = {
   "export.video": "Export your animation as MP4 or WebM video.",
 
   // Animation
-  "animate": null,
+  animate: null,
 
   // Cloud / brand
   "cloud.sync": "Cloud sync — your designs follow you across devices.",
   "brand.watermark": "Remove the PrettyShot watermark from your exports.",
 };
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Static marketing lists for the pricing page.
+ *
+ * Edit these freely — they are plain copy, decoupled from the gating
+ * registry above (which is what actually locks features in the editor).
+ * ──────────────────────────────────────────────────────────────────────── */
+
+export const FREE_FEATURES: string[] = [
+  "PNG exports up to 1080p HD",
+  "Safari & Chrome browser frames",
+  "Solid, mesh & aurora backgrounds",
+  "Auto palettes from your screenshot",
+  "Annotations, text & shapes",
+  "Standard aspect ratios",
+  "Free Pro trial, no card required",
+];
+
+export const PRO_FEATURES: string[] = [
+  "Everything in Free, plus:",
+  "PNG, JPEG & WebP up to 8K",
+  "Premium iPhone, MacBook & iPad frames",
+  "3D tilt, lighting, grain & borders",
+  "Social presets + custom ratios",
+  "Animation timeline + video export",
+  "Cloud sync across devices",
+  "No watermark on exports",
+];

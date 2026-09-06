@@ -18,6 +18,7 @@
         "@polar-sh/sdk": "^0.48.1",
         "@supabase/ssr": "^0.12.1",
         "@supabase/supabase-js": "^2.110.3",
+        "@types/color": "^4.2.1",
         "@upstash/redis": "^1.38.2",
         "@vercel/analytics": "^2.0.1",
         "axios": "^1.13.6",
@@ -611,6 +612,12 @@
     "@ts-morph/common": ["@ts-morph/common@0.29.0", "", { "dependencies": { "minimatch": "^10.0.1", "path-browserify": "^1.0.1", "tinyglobby": "^0.2.14" } }, "sha512-35oUmphHbJvQ/+UTwFNme/t2p3FoKiGJ5auTjjpNTop2dyREspirjMy82PLSC1pnDJ8ah1GU98hwpVt64YXQsg=="],
 
     "@tybys/wasm-util": ["@tybys/wasm-util@0.10.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg=="],
+
+    "@types/color": ["@types/color@4.2.1", "", { "dependencies": { "@types/color-convert": "2" } }, "sha512-ResWeDLy1vozIMbD6JLRKuNBbIcIlBkjTIxVHHd5Cqtm77T+ahH3BWE/PWv1OhFd1HAwcn8no4ig2uTaRXpYQQ=="],
+
+    "@types/color-convert": ["@types/color-convert@2.0.4", "", { "dependencies": { "@types/color-name": "^1.1.0" } }, "sha512-Ub1MmDdyZ7mX//g25uBAoH/mWGd9swVbt8BseymnaE18SU4po/PjmCrHxqIIRjBo3hV/vh1KGr0eMxUhp+t+dQ=="],
+
+    "@types/color-name": ["@types/color-name@1.1.5", "", {}, "sha512-j2K5UJqGTxeesj6oQuGpMgifpT5k9HprgQd8D1Y0lOFqKHl3PJu5GMeS4Y5EgjS55AE6OQxf8mPED9uaGbf4Cg=="],
 
     "@types/dom-webcodecs": ["@types/dom-webcodecs@0.1.19", "", {}, "sha512-+yFUIDUaASFz0vQpWBErPxun/Lb+F0TdrlTsj50gm7K797YzEx2TmV6fEiwciHyFNghlZYPgQXH5qRcwMHcJFQ=="],
 
