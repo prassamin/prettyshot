@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerClient, createServiceClient } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/supabase/server";
 import {
   AuthError,
   ForbiddenError,
@@ -308,107 +308,4 @@ export async function getUserUploadSignature(
 
   const folder = `prettyshot/users/${user.id}/bg`;
   return createUploadSignature(folder, "upload", undefined, clientTimestamp);
-}
-
-/**
- * Returns signed upload URLs for a new background asset + thumbnail.
- * @adminOnly
- */
-export async function getUploadUrls(
-  assetFileName: string,
-  thumbnailFileName: string,
-  isFree: boolean,
-) {
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { ADMIN_EMAILS } = await import("@/config");
-  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
-    throw new Error("Admin access only.");
-  }
-
-  const uuid = crypto.randomUUID();
-  const adminSupabase = createServiceClient();
-
-  const thumbExt = thumbnailFileName.split(".").pop();
-  const thumbPath = `bg-thumbnails/${uuid}-thumb.${thumbExt}`;
-
-  const { data: thumbData, error: thumbError } = await adminSupabase.storage
-    .from("prettyshot")
-    .createSignedUploadUrl(thumbPath);
-
-  if (thumbError || !thumbData)
-    throw new Error("Thumb URL: " + thumbError?.message);
-
-  const assetExt = assetFileName.split(".").pop();
-  const assetPathName = `${uuid}-asset.${assetExt}`;
-  const assetBucket = isFree ? "prettyshot" : "premium-assets";
-  const assetPath = isFree ? `backgrounds/${assetPathName}` : assetPathName;
-
-  const { data: assetData, error: assetError } = await adminSupabase.storage
-    .from(assetBucket)
-    .createSignedUploadUrl(assetPath);
-
-  if (assetError || !assetData)
-    throw new Error("Asset URL: " + assetError?.message);
-
-  return {
-    uuid,
-    thumbUploadToken: thumbData.token,
-    thumbPath,
-    assetUploadToken: assetData.token,
-    assetPath,
-    assetBucket,
-  };
-}
-
-/**
- * Persists the uploaded background row into Supabase.
- * @adminOnly
- */
-export async function saveBackgroundMetadata(
-  id: string,
-  name: string,
-  category: "mesh" | "image",
-  isFree: boolean,
-  thumbPath: string,
-  assetPath: string,
-) {
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { ADMIN_EMAILS } = await import("@/config");
-  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
-    throw new Error("Admin access only.");
-  }
-
-  const adminSupabase = createServiceClient();
-
-  const { data: thumbPublicData } = adminSupabase.storage
-    .from("prettyshot")
-    .getPublicUrl(thumbPath);
-  const thumbnailUrl = thumbPublicData.publicUrl;
-
-  let storagePath = assetPath;
-  if (isFree) {
-    const { data: publicData } = adminSupabase.storage
-      .from("prettyshot")
-      .getPublicUrl(assetPath);
-    storagePath = publicData.publicUrl;
-  }
-
-  const { error } = await adminSupabase.from("backgrounds").insert({
-    id,
-    name,
-    category,
-    thumbnail_url: thumbnailUrl,
-    storage_path: storagePath,
-    is_free: isFree,
-  });
-
-  if (error)
-    throw new Error("Failed to insert into database: " + error.message);
-  return { success: true };
 }

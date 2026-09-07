@@ -278,38 +278,15 @@ export const getFramesCatalog = unstable_cache(
   { revalidate: 3600, tags: ["frames"] },
 );
 
-/** Uncached catalog fetch — for the admin panel where instant freshness matters. */
-export const getFramesCatalogUncached = async () => {
-  // Admin route: always rescan Cloudinary so freshly uploaded frames appear
-  // immediately. KV is only trusted for rich metadata (names, geometry,
-  // colors, default variants, pro status), which we overlay onto the scan.
-  const scanned = await fetchCatalogUncached();
-  if (scanned.length === 0) return scanned;
-
-  const merged = await Promise.all(
-    scanned.map(async (cat) => {
-      const kvCat = await kv.get<KvCategory>(framesCategoryKey(cat.id));
-      if (kvCat) {
-        cat.label = kvCat.label;
-        cat.iconUrl = kvCat.iconUrl;
-      }
-      for (const frame of cat.frames) {
-        const kvFrame = await kv.get<FrameInfo>(framesFrameKey(frame.id));
-        if (kvFrame) {
-          frame.name = kvFrame.name;
-          frame.isFree = kvFrame.isFree;
-          frame.supportsOrientation = kvFrame.supportsOrientation ?? false;
-          frame.defaultVariant = kvFrame.defaultVariant;
-          frame.colors = kvFrame.colors ?? {};
-          frame.geometry = kvFrame.geometry ?? null;
-        }
-      }
-      return cat;
-    }),
-  );
-
-  await writeKvCatalog(merged);
-  return merged;
+/** Uncached catalog fetch — for the admin panel where instant freshness matters.
+ *  Reads straight from KV: the admin UI is the single writer (it updates
+ *  Cloudinary + KV together on every action), so KV is authoritative.
+ *  No Cloudinary scan on the hot path. */
+export const getFramesCatalogUncached = async (): Promise<
+  FrameCategoryInfo[]
+> => {
+  const cached = await readKvCatalog();
+  return cached ?? [];
 };
 
 /* ── KV entity helpers ────────────────────────────────── */
@@ -385,11 +362,11 @@ async function readFramesCatalog(): Promise<FrameCategoryInfo[]> {
 }
 
 /**
- * Rebuilds the catalog from Cloudinary and persists to KV while preserving
- * rich metadata already in KV (category labels/icons, frame names, colors,
- * geometry, default variants, pro status). Scanned variant URLs stay
- * authoritative — the scan is the only component that knows the real
- * asset structure after uploads/deletes/renames.
+ * rebuilds the catalog from Cloudinary and persists to KV
+ * while preserving rich metadata already in KV (category labels/icons, frame
+ * names, colors, geometry, kind, default variants, pro status). Only needed
+ * if assets were ever changed outside the admin UI — the admin UI itself is
+ * the single writer and keeps KV authoritative on every action.
  */
 export async function refreshFramesCatalog(): Promise<FrameCategoryInfo[]> {
   await getAdminUser();
@@ -407,6 +384,7 @@ export async function refreshFramesCatalog(): Promise<FrameCategoryInfo[]> {
         frame.name = kvFrame.name;
         frame.isFree = kvFrame.isFree;
         frame.supportsOrientation = kvFrame.supportsOrientation ?? false;
+        frame.kind = kvFrame.kind ?? frame.kind;
         frame.defaultVariant = kvFrame.defaultVariant;
         frame.colors = kvFrame.colors ?? {};
         frame.geometry = kvFrame.geometry ?? null;

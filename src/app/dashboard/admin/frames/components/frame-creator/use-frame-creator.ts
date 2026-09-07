@@ -42,8 +42,19 @@ export function useFrameCreator(
   const [variants, setVariants] = React.useState<VariantDraft[]>([]);
   const [defaultVariantId, setDefaultVariantId] = React.useState("");
   const [geometry, setGeometry] = React.useState(DEFAULT_GEOMETRY);
+  const [geometryTouched, setGeometryTouched] = React.useState(false);
   const [geometryOpen, setGeometryOpen] = React.useState(false);
   const [geometryDetecting, setGeometryDetecting] = React.useState(false);
+
+  /** Manual geometry edits (form fields / visual editor) — marks the value as
+   *  user-owned so later variant uploads never auto-overwrite it. */
+  const setGeometryManual = React.useCallback(
+    (next: React.SetStateAction<typeof DEFAULT_GEOMETRY>) => {
+      setGeometryTouched(true);
+      setGeometry(next);
+    },
+    [],
+  );
 
   const [uploading, setUploading] = React.useState(false);
   const [progressMap, setProgressMap] = React.useState<Record<string, number>>({});
@@ -87,6 +98,9 @@ export function useFrameCreator(
       editing.frame.defaultVariant ?? editing.frame.variants[0]?.id ?? "";
     setDefaultVariantId(defaultRawId ? `e${defaultRawId}` : "");
     setGeometry(editing.frame.geometry ?? DEFAULT_GEOMETRY);
+    // Edit mode: geometry is loaded from the stored frame — treat as owned so
+    // picking a new variant's frame never re-detects over it.
+    setGeometryTouched(true);
     setVariants(
       editing.frame.variants.map((v) => ({
         id: `e${v.id}`,
@@ -124,12 +138,22 @@ export function useFrameCreator(
   const patchVariant = (id: string, patch: Partial<VariantDraft>) => {
     setVariants((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
 
-    if (patch.frame && !geometryDetecting) {
+    // Auto-detect geometry ONLY for the very first frame file, and only while
+    // the geometry is still untouched. Uploading a second/third variant's
+    // frame must never clobber the geometry already set for the first one.
+    if (patch.frame && !geometryDetecting && !geometryTouched) {
       setGeometryDetecting(true);
+      setGeometryTouched(true);
       detectGeometryFromFile(
         patch.frame,
-        (detected) => setGeometry(detected),
-        () => setGeometryDetecting(false),
+        (detected) => {
+          setGeometry(detected);
+          setGeometryDetecting(false);
+        },
+        () => {
+          setGeometryTouched(false);
+          setGeometryDetecting(false);
+        },
       );
     }
   };
@@ -339,6 +363,7 @@ export function useFrameCreator(
     setVariants([]);
     setDefaultVariantId("");
     setGeometry(DEFAULT_GEOMETRY);
+    setGeometryTouched(false);
     setGeometryOpen(false);
     setDone(false);
     setProgressMap({});
@@ -385,7 +410,8 @@ export function useFrameCreator(
     defaultVariantId,
     setDefaultVariantId,
     geometry,
-    setGeometry,
+    setGeometry: setGeometryManual,
+    geometryTouched,
     geometryOpen,
     setGeometryOpen,
     geometryDetecting,
