@@ -2,16 +2,18 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FolderKanban, LayoutGrid, PlusCircle } from "lucide-react";
+import { FolderKanban, LayoutGrid, PlusCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import {
   getFramesCatalogUncached,
+  refreshFramesCatalog,
   type FrameCategoryInfo,
 } from "@/app/actions/frames";
 import { FrameCreator } from "./components/upload-wizard";
 import { FramesGallery } from "./components/frames-gallery";
 import { CategoryManager } from "./components/category-manager";
+import { toast } from "@heroui/react";
 
 type TabId = "upload" | "library" | "categories";
 
@@ -43,6 +45,24 @@ export function FramesView({
     }
   }, []);
 
+  const [resyncing, setResyncing] = React.useState(false);
+
+  /** Manual "rebuild from Cloudinary" — only for when assets were changed
+   *  outside the admin UI. Normal admin ops keep KV authoritative. */
+  const handleResync = async () => {
+    setResyncing(true);
+    try {
+      const fresh = await refreshFramesCatalog();
+      setCatalog(fresh);
+      toast.success("Catalog resynced from Cloudinary");
+    } catch (err) {
+      console.error("Resync failed:", err);
+      toast.danger("Resync failed");
+    } finally {
+      setResyncing(false);
+    }
+  };
+
   const handleEdit = React.useCallback(
     (categoryId: string, frame: FrameCategoryInfo["frames"][number]) => {
       setEditing({ categoryId, frame });
@@ -53,33 +73,48 @@ export function FramesView({
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
-      <div className="relative flex w-fit items-center gap-1 rounded-2xl border border-border/50 bg-surface-muted/50 p-1">
-        {TABS.map((t) => {
-          const active = tab === t.id;
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={cn(
-                "relative flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-medium transition-colors",
-                active ? "text-foreground" : "text-muted-foreground",
-              )}
-            >
-              {active && (
-                <motion.span
-                  layoutId="frames-admin-tab"
-                  className="absolute inset-0 rounded-xl bg-muted/60 ring-1 ring-border/60"
-                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                />
-              )}
-              <Icon className="relative z-10 size-3.5" />
-              <span className="relative z-10">{t.label}</span>
-            </button>
-          );
-        })}
+      {/* Tabs + resync */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative flex w-fit items-center gap-1 rounded-2xl border border-border/50 bg-surface-muted/50 p-1">
+          {TABS.map((t) => {
+            const active = tab === t.id;
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={cn(
+                  "relative flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-medium transition-colors",
+                  active ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="frames-admin-tab"
+                    className="absolute inset-0 rounded-xl bg-muted/60 ring-1 ring-border/60"
+                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  />
+                )}
+                <Icon className="relative z-10 size-3.5" />
+                <span className="relative z-10">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleResync}
+          disabled={resyncing}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-surface-muted/40 px-3 py-2 text-[11px] font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground disabled:opacity-60"
+          title="Rebuild the catalog from Cloudinary (only needed if assets changed outside this admin UI)"
+        >
+          <RefreshCw
+            className={cn("size-3.5", resyncing && "animate-spin")}
+          />
+          {resyncing ? "Resyncing…" : "Resync from Cloudinary"}
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
