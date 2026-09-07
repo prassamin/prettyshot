@@ -66,37 +66,130 @@ export function detectGeometry(img: HTMLImageElement): FrameGeometry {
       const imgData = ctx.getImageData(0, 0, w, h);
       const data = imgData.data;
 
-      // Find bounding box of inner transparent pixels (alpha < 15)
-      // Check from a generous inner margin to avoid outer transparent borders
-      let minX = w;
-      let maxX = 0;
-      let minY = h;
-      let maxY = 0;
-      let transparentCount = 0;
+      // Find the TRUE screen hole as the largest transparent region that is
+      // fully enclosed by opaque pixels (the device body). A simple "bbox of
+      // transparent pixels" fails on laptops/open-lid shapes: the transparent
+      // margins around the base/keyboard inflate the box. Instead run a
+      // scanline connected-component pass (run-level union-find, O(pixels))
+      // and keep the biggest region that never touches the canvas edge —
+      // that region IS the screen cutout, for phones, laptops, monitors, etc.
+      const alphaAt = (i: number) => data[i * 4 + 3] ?? 255;
+      const isOpaque = (i: number) => alphaAt(i) > 128;
+      const step = Math.max(1, Math.floor(Math.min(w, h) / 300));
 
-      const step = Math.max(1, Math.floor(Math.min(w, h) / 400));
-
-      for (let y = Math.floor(h * 0.05); y < Math.floor(h * 0.95); y += step) {
-        for (let x = Math.floor(w * 0.05); x < Math.floor(w * 0.95); x += step) {
-          const idx = (y * w + x) * 4;
-          const alpha = data[idx + 3] ?? 255;
-          if (alpha < 25) {
-            transparentCount++;
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-          }
+      // Downsample the read: sample every `step` px per row/col.
+      const sw = Math.ceil(w / step);
+      const sh = Math.ceil(h / step);
+      const sample: Uint8Array = new Uint8Array(sw * sh);
+      for (let y = 0; y < sh; y++) {
+        for (let x = 0; x < sw; x++) {
+          const px = Math.min(w - 1, x * step);
+          const py = Math.min(h - 1, y * step);
+          sample[y * sw + x] = isOpaque(py * w + px) ? 1 : 0;
         }
       }
 
-      if (transparentCount > 50 && maxX > minX && maxY > minY) {
+      // Union-find over runs of transparent pixels per row.
+      const parent: number[] = [];
+      const size: number[] = [];
+      const bx0: number[] = [];
+      const by0: number[] = [];
+      const bx1: number[] = [];
+      const by1: number[] = [];
+      const touchesEdge = new Set<number>();
+      const find = (i: number): number => {
+        while (parent[i] !== i) {
+          parent[i] = parent[parent[i]];
+          i = parent[i];
+        }
+        return i;
+      };
+      const union = (a: number, b: number) => {
+        let ra = find(a);
+        let rb = find(b);
+        if (ra === rb) return ra;
+        if (size[ra] < size[rb]) [ra, rb] = [rb, ra];
+        parent[rb] = ra;
+        size[ra] += size[rb];
+        bx0[ra] = Math.min(bx0[ra], bx0[rb]);
+        by0[ra] = Math.min(by0[ra], by0[rb]);
+        bx1[ra] = Math.max(bx1[ra], bx1[rb]);
+        by1[ra] = Math.max(by1[ra], by1[rb]);
+        return ra;
+      };
+
+      let nextId = 0;
+      let prevRow: Array<[number, number, number]> = []; // [start,end,comp]
+
+      for (let y = 0; y < sh; y++) {
+        const row: Array<[number, number, number]> = [];
+        let runStart = -1;
+        for (let x = 0; x <= sw; x++) {
+          const transparent = x < sw && sample[y * sw + x] === 0;
+          if (transparent && runStart === -1) runStart = x;
+          if ((!transparent || x === sw) && runStart !== -1) {
+            const s = runStart;
+            const e = x - 1;
+            runStart = -1;
+            // Find previous-row components overlapping [s,e]
+            let comp = -1;
+            for (const [ps, pe, pc] of prevRow) {
+              if (s <= pe && e >= ps) {
+                comp = comp === -1 ? pc : union(comp, pc);
+              }
+            }
+            if (comp === -1) {
+              comp = nextId++;
+              parent[comp] = comp;
+              size[comp] = 0;
+              bx0[comp] = s;
+              by0[comp] = y;
+              bx1[comp] = e;
+              by1[comp] = y;
+            }
+            const root = find(comp);
+            // grow bbox + size
+            bx0[root] = Math.min(bx0[root], s);
+            by0[root] = Math.min(by0[root], y);
+            bx1[root] = Math.max(bx1[root], e);
+            by1[root] = Math.max(by1[root], y);
+            size[root] += e - s + 1;
+            if (s <= 0 || e >= sw - 1 || y <= 0 || y >= sh - 1) {
+              touchesEdge.add(root);
+            }
+            row.push([s, e, root]);
+          }
+        }
+        prevRow = row;
+      }
+
+      // Largest enclosed (non-edge) component = the screen cutout.
+      let best = -1;
+      let bestPx = 0;
+      for (let c = 0; c < nextId; c++) {
+        if (touchesEdge.has(c)) continue;
+        if (size[c] > 100 && size[c] > bestPx) {
+          bestPx = size[c];
+          best = c;
+        }
+      }
+
+      if (best !== -1) {
+        // Scale sampled coords back to real pixels.
+        const minX = bx0[best] * step;
+        const minY = by0[best] * step;
+        const maxX = Math.min(w - 1, (bx1[best] + 1) * step - 1);
+        const maxY = Math.min(h - 1, (by1[best] + 1) * step - 1);
         const screenW = maxX - minX;
         const screenH = maxY - minY;
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
 
-        const scale = Number((screenW / w).toFixed(3));
+        // Raw hole scale (holeW / frameW). Bump by ~1% so the screen tucks a
+        // hair under the anti-aliased bezel edge — under-fill shows as a gap
+        // at full zoom, while a 1% over-fill is hidden by the opaque frame.
+        const rawScale = screenW / w;
+        const scale = Number((rawScale * 1.01).toFixed(3));
         const offsetX = Number((((centerX - w / 2) / w) * 100).toFixed(2));
         const offsetY = Number((((centerY - h / 2) / h) * 100).toFixed(2));
 
@@ -107,7 +200,12 @@ export function detectGeometry(img: HTMLImageElement): FrameGeometry {
             scale: Math.max(0.2, Math.min(1.5, scale)),
             offsetX: Math.abs(offsetX) > 0.1 ? offsetX : 0,
             offsetY: Math.abs(offsetY) > 0.1 ? offsetY : 0,
-            borderRadius: Math.max(0, Math.round(Math.min(screenW, screenH) * 0.04)),
+            // Rough corner radius: ~20% of the smaller screen dimension
+            // (typical for modern phones); fine-tune in the visual editor.
+            borderRadius: Math.max(
+              8,
+              Math.round(Math.min(screenW, screenH) * 0.2),
+            ),
           },
         };
       }

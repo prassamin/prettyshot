@@ -187,7 +187,7 @@ export function DeviceFrameStage({
         onWheel={onWheel}
       >
         <motion.div
-          key={`${deviceFrame.deviceId ?? "frame"}-${deviceFrame.orientation}`}
+          key={`${deviceFrame.orientation ?? "portrait"}`}
           initial={
             isFirstMountRef.current
               ? false

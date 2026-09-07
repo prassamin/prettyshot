@@ -96,7 +96,6 @@ export function FramesGallery({
       </div>
     );
   }
-console.log(catalog);
   const totalFrames = catalog.reduce((acc, c) => acc + c.frames.length, 0);
   const totalVariants = catalog.reduce(
     (acc, c) => acc + c.frames.reduce((a, f) => a + f.variants.length, 0),

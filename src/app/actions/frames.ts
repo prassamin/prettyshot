@@ -33,6 +33,8 @@ export type FrameVariantInfo = {
   framePublicId?: string | null;
   thumbPublicId?: string | null;
   frameType?: "upload" | "authenticated";
+  frameVersion?: number;
+  thumbVersion?: number;
 };
 
 export type FrameInfo = {
@@ -116,6 +118,9 @@ export async function getFrameUploadSignatures(
       folder: spec.folder,
       public_id: spec.publicId,
       timestamp,
+      // Always purge the CDN copy when (re)uploading so an overwritten
+      // frame image isn't served stale from the edge at the same URL.
+      invalidate: "1",
     };
 
     if (spec.type === "authenticated") {
@@ -529,6 +534,8 @@ export type FrameVariantDraftInput = {
   name: string;
   hasFrame?: boolean;
   hasThumb?: boolean;
+  frameVersion?: number;
+  thumbVersion?: number;
   existingFrameUrl?: string | null;
   existingThumbUrl?: string | null;
 };
@@ -584,6 +591,11 @@ export async function updateFrameMetadata(
           ? cloudinary.url(framePid, {
               type: "upload",
               secure: true,
+              // Only pin the version when this slot was actually re-uploaded
+              // this session — a stale/0 version would mislead the CDN.
+              ...(v.frameVersion
+                ? { version: v.frameVersion }
+                : {}),
               transformation: [{ fetch_format: "auto", quality: "auto" }],
             })
           : (v.existingFrameUrl ?? null);
@@ -592,6 +604,9 @@ export async function updateFrameMetadata(
           ? cloudinary.url(thumbPid, {
               type: "upload",
               secure: true,
+              ...(v.thumbVersion
+                ? { version: v.thumbVersion }
+                : {}),
               transformation: [{ fetch_format: "auto", quality: "auto" }],
             })
           : (v.existingThumbUrl ?? null);
@@ -600,6 +615,8 @@ export async function updateFrameMetadata(
           id: varName,
           frameUrl,
           thumbUrl,
+          frameVersion: v.frameVersion,
+          thumbVersion: v.thumbVersion,
           framePublicId: framePid,
           thumbPublicId: thumbPid,
           frameType: "upload",

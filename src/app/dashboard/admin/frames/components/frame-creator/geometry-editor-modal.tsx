@@ -477,8 +477,6 @@ export function GeometryEditorModal({
                     <div
                       className={cn(
                         "relative w-full overflow-hidden bg-black transition-all",
-                        showGuides &&
-                          "ring-2 ring-primary/90 shadow-[0_0_25px_rgba(var(--primary),0.45)]",
                       )}
                       style={{
                         aspectRatio: localGeom.screen.aspectRatio,
@@ -520,6 +518,37 @@ export function GeometryEditorModal({
                     <div className="z-20 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/80 bg-surface/50 p-6 text-center text-xs text-muted-foreground">
                       <Smartphone className="size-8 mb-2 opacity-50" />
                       <span>Upload a frame image to preview alignment</span>
+                    </div>
+                  )}
+
+                  {/* Solid screen-edge outline on top of the frame artwork —
+                      traces the projected screen boundary with matching
+                      rounded corners so the edge reads clearly over the
+                      bezel. */}
+                  {showGuides && frameImageUrl && (
+                    <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
+                      <div
+                        className="relative w-full"
+                        style={{
+                          aspectRatio: localGeom.screen.aspectRatio,
+                          transform: deviceFrameViewportTransform({
+                            scale: localGeom.screen.scale ?? 1,
+                            offsetX: localGeom.screen.offsetX ?? 0,
+                            offsetY: localGeom.screen.offsetY ?? 0,
+                          }),
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            border: "1.5px solid color-mix(in oklab, var(--primary) 80%, transparent)",
+                            ...deviceFrameViewportClip(
+                              localGeom.screen,
+                              stageWidth,
+                            ),
+                          }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

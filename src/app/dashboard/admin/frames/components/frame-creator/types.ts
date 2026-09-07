@@ -7,6 +7,12 @@ export type VariantDraft = {
   frame: File | null;
   thumb: File | null;
   preview: string | null;
+  /** Cloudinary asset version of the frame image — set only after an actual
+   *  upload this session (undefined = keep existing / not re-uploaded). */
+  frameVersion?: number;
+  /** Cloudinary asset version of the thumb image — set only after an actual
+   *  upload this session (undefined = keep existing / not re-uploaded). */
+  thumbVersion?: number;
   existingFrameUrl?: string | null;
   existingThumbUrl?: string | null;
 };
