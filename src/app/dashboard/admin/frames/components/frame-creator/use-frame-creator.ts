@@ -23,6 +23,7 @@ import {
 } from "./utils";
 import { slugify } from "@/lib/utils";
 import { MAX_FILE_SIZE } from "@/config";
+import { CloudinaryResource } from "@/types/cloudinary";
 
 export function useFrameCreator(
   editing: EditingFrame | null,
@@ -57,22 +58,29 @@ export function useFrameCreator(
   );
 
   const [uploading, setUploading] = React.useState(false);
-  const [progressMap, setProgressMap] = React.useState<Record<string, number>>({});
+  const [progressMap, setProgressMap] = React.useState<Record<string, number>>(
+    {},
+  );
   const [done, setDone] = React.useState(false);
   const [removedVariants, setRemovedVariants] = React.useState<string[]>([]);
+
+  // Synchronous mirror of freshly-uploaded slot versions. `setVariants` is
+  // async, so reading `variants` right after an upload (inside runUpload)
+  // would see stale values — this ref is written immediately and read when
+  // building the final metadata patch.
+  const uploadVersionsRef = React.useRef<
+    Record<string, { frameVersion?: number; thumbVersion?: number }>
+  >({});
 
   const isEditing = !!editing;
   const categorySlug = isNewCategory ? slugify(categoryId) : categoryId;
 
   /* ── identity handlers ───────────────────────────────── */
 
-  const handleNameChange = React.useCallback(
-    (value: string) => {
-      setFrameName(value);
-      if (!frameIdTouched.current) setFrameId(slugify(value));
-    },
-    [],
-  );
+  const handleNameChange = React.useCallback((value: string) => {
+    setFrameName(value);
+    if (!frameIdTouched.current) setFrameId(slugify(value));
+  }, []);
 
   const handleIdChange = React.useCallback((value: string) => {
     frameIdTouched.current = true;
@@ -83,6 +91,7 @@ export function useFrameCreator(
 
   const applyEditForm = React.useCallback(() => {
     if (!editing) return;
+    uploadVersionsRef.current = {};
     setRemovedVariants([]);
     setCategoryId(editing.categoryId);
     setIsNewCategory(false);
@@ -130,13 +139,22 @@ export function useFrameCreator(
     const id = `v${Date.now()}`;
     setVariants((prev) => [
       ...prev,
-      { id, name: "", color: "#6b7280", frame: null, thumb: null, preview: null },
+      {
+        id,
+        name: "",
+        color: "#6b7280",
+        frame: null,
+        thumb: null,
+        preview: null,
+      },
     ]);
     if (!defaultVariantId) setDefaultVariantId(id);
   };
 
   const patchVariant = (id: string, patch: Partial<VariantDraft>) => {
-    setVariants((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
+    setVariants((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, ...patch } : v)),
+    );
 
     // Auto-detect geometry ONLY for the very first frame file, and only while
     // the geometry is still untouched. Uploading a second/third variant's
@@ -172,7 +190,7 @@ export function useFrameCreator(
   /* ── upload ──────────────────────────────────────────── */
 
   const uploadFile = (file: File, sig: UploadSig) => {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<CloudinaryResource>((resolve, reject) => {
       const endpoint =
         sig.resourceType === "raw"
           ? `https://api.cloudinary.com/v1_1/${sig.cloudName}/raw/upload`
@@ -182,12 +200,26 @@ export function useFrameCreator(
       xhr.open("POST", endpoint);
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
-          setProgressMap((p) => ({ ...p, [sig.key]: (e.loaded / e.total) * 100 }));
+          setProgressMap((p) => ({
+            ...p,
+            [sig.key]: (e.loaded / e.total) * 100,
+          }));
         }
       };
+
       xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) resolve();
-        else reject(new Error(`Upload failed (${xhr.status})`));
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            // Parse the response text into a JSON object
+            const responseData = JSON.parse(xhr.responseText);
+            // Resolve the Promise with the metadata result object
+            resolve(responseData);
+          } catch {
+            reject(new Error("Failed to parse Cloudinary response JSON"));
+          }
+        } else {
+          reject(new Error(`Upload failed (${xhr.status})`));
+        }
       };
       xhr.onerror = () => reject(new Error("Network error"));
 
@@ -198,6 +230,7 @@ export function useFrameCreator(
       form.append("signature", sig.signature);
       form.append("folder", sig.folder);
       form.append("public_id", sig.publicId);
+      form.append("invalidate", "1");
       if (sig.type === "authenticated") form.append("type", "authenticated");
       xhr.send(form);
     });
@@ -208,7 +241,6 @@ export function useFrameCreator(
     setDone(false);
     setProgressMap({});
 
-    const type: "upload" = "upload";
     const baseFolder = isEditing
       ? `prettyshot/frames/${editing!.categoryId}`
       : `prettyshot/frames/${categorySlug}`;
@@ -247,7 +279,10 @@ export function useFrameCreator(
     for (const v of variants) {
       const vFolder = `${baseFolder}/${frameId}/${v.name.trim()}`;
       if (v.frame) {
-        freshSlots[v.name.trim()] = { ...freshSlots[v.name.trim()], frame: true };
+        freshSlots[v.name.trim()] = {
+          ...freshSlots[v.name.trim()],
+          frame: true,
+        };
         uploads.push({
           file: v.frame,
           folder: vFolder,
@@ -258,7 +293,10 @@ export function useFrameCreator(
         });
       }
       if (v.thumb) {
-        freshSlots[v.name.trim()] = { ...freshSlots[v.name.trim()], thumb: true };
+        freshSlots[v.name.trim()] = {
+          ...freshSlots[v.name.trim()],
+          thumb: true,
+        };
         uploads.push({
           file: v.thumb,
           folder: vFolder,
@@ -293,7 +331,34 @@ export function useFrameCreator(
       for (const u of uploads) {
         const sig = sigByKey.get(u.key);
         if (!sig) throw new Error(`Missing signature for ${u.key}`);
-        await uploadFile(u.file, sig);
+        const result = await uploadFile(u.file, sig);
+
+        if (u.type === "upload") {
+          // Store the version per slot (frame vs thumb) so each URL is built
+          // with its own real version — frame and thumb are separate assets
+          // and bump versions independently on overwrite.
+          const dash = u.key.lastIndexOf("-");
+          const variantId = u.key.slice(0, dash);
+          const slot = u.key.slice(dash + 1);
+          // Write synchronously to the ref so the final metadata patch below
+          // sees the real versions (setVariants is async).
+          uploadVersionsRef.current[variantId] = {
+            ...uploadVersionsRef.current[variantId],
+            ...(slot === "frame"
+              ? { frameVersion: result.version }
+              : slot === "thumb"
+                ? { thumbVersion: result.version }
+                : {}),
+          };
+          setVariants((prev) =>
+            prev.map((v) => {
+              if (v.id !== variantId) return v;
+              if (slot === "frame") return { ...v, frameVersion: result.version };
+              if (slot === "thumb") return { ...v, thumbVersion: result.version };
+              return v;
+            }),
+          );
+        }
         setProgressMap((p) => ({ ...p, [u.key]: 100 }));
       }
 
@@ -302,7 +367,11 @@ export function useFrameCreator(
           try {
             await deleteVariant(editing!.categoryId, frameId, variantName);
           } catch (err) {
-            console.error("Failed to delete removed variant:", variantName, err);
+            console.error(
+              "Failed to delete removed variant:",
+              variantName,
+              err,
+            );
           }
         }
       }
@@ -310,9 +379,7 @@ export function useFrameCreator(
       // Persist frame metadata (name, colors, geometry, default) to KV.
       // The Cloudinary scan only rebuilds structure from images, so we
       // write the rich metadata here.
-      const categoryResolved = isEditing
-        ? editing!.categoryId
-        : categorySlug;
+      const categoryResolved = isEditing ? editing!.categoryId : categorySlug;
       try {
         await updateFrameMetadata(categoryResolved, frameId, {
           name: meta.name,
@@ -322,14 +389,21 @@ export function useFrameCreator(
           default_variant: meta.default_variant,
           colors: meta.colors,
           geometry: meta.geometry,
-          variants: variants.map((v) => ({
-            id: v.id,
-            name: v.name.trim(),
-            hasFrame: Boolean(v.frame),
-            hasThumb: Boolean(v.thumb),
-            existingFrameUrl: v.existingFrameUrl,
-            existingThumbUrl: v.existingThumbUrl,
-          })),
+          variants: variants.map((v) => {
+            // Merge in the versions captured from this session's uploads
+            // (state may be stale here; the ref is authoritative).
+            const uploaded = uploadVersionsRef.current[v.id];
+            return {
+              id: v.id,
+              name: v.name.trim(),
+              hasFrame: Boolean(v.frame),
+              hasThumb: Boolean(v.thumb),
+              frameVersion: uploaded?.frameVersion ?? v.frameVersion,
+              thumbVersion: uploaded?.thumbVersion ?? v.thumbVersion,
+              existingFrameUrl: v.existingFrameUrl,
+              existingThumbUrl: v.existingThumbUrl,
+            };
+          }),
         });
       } catch (err) {
         console.error("Failed to persist frame metadata to KV:", err);
@@ -337,7 +411,9 @@ export function useFrameCreator(
 
       setDone(true);
       toast.success(
-        isEditing ? "Frame updated successfully" : "Frame uploaded successfully",
+        isEditing
+          ? "Frame updated successfully"
+          : "Frame uploaded successfully",
       );
       onUploaded();
     } catch (e) {
@@ -368,6 +444,7 @@ export function useFrameCreator(
     setDone(false);
     setProgressMap({});
     setRemovedVariants([]);
+    uploadVersionsRef.current = {};
     // When in edit mode, exit back to create mode
     if (isEditing) onUploaded?.();
   };
