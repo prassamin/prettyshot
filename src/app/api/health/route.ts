@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { kv } from "@/lib/kv-store";
 import { cloudinary } from "@/lib/cloudinary";
-import { polar } from "@/lib/polar";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -13,7 +12,9 @@ type CheckResult = {
   detail?: string;
 };
 
-async function time<T>(fn: () => Promise<T>): Promise<{ ms: number; result: T }> {
+async function time<T>(
+  fn: () => Promise<T>,
+): Promise<{ ms: number; result: T }> {
   const start = Date.now();
   const result = await fn();
   return { ms: Date.now() - start, result };
@@ -36,7 +37,7 @@ export async function GET() {
   const checks: Record<string, CheckResult> = {};
   const reportStartedAt = Date.now();
 
-  // ── 1. Supabase (Postgres) ──────────────────────────────────────────
+  // ── Supabase (Postgres) ──────────────────────────────────────────
   try {
     const supabase = createServiceClient();
     const { ms } = await time(async () => {
@@ -55,7 +56,7 @@ export async function GET() {
     };
   }
 
-  // ── 2. Upstash Redis (KV) ───────────────────────────────────────────
+  // ── Upstash Redis (KV) ───────────────────────────────────────────
   try {
     const { ms } = await time(async () => {
       const pong = await kv.ping();
@@ -71,7 +72,7 @@ export async function GET() {
     };
   }
 
-  // ── 3. Cloudinary ───────────────────────────────────────────────────
+  // ── Cloudinary ───────────────────────────────────────────────────
   try {
     const { ms } = await time(async () => {
       // Ping the account — cheap resources call (1 item) proves auth + API.

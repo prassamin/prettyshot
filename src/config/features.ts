@@ -106,25 +106,25 @@ export const FEATURES: Record<FeatureId, FeatureTier> = {
   "backgrounds.upload": "pro",
 
   // Backdrop
-  "backdrop.shadow": "pro",
-  "backdrop.lighting": "pro",
-  "backdrop.adjustments": "pro",
-  "backdrop.filters": "pro",
+  "backdrop.shadow": "free",
+  "backdrop.lighting": "free",
+  "backdrop.adjustments": "free",
+  "backdrop.filters": "free",
 
   // Transformations
   "transform.tilt": "pro",
-  "transform.layout": "pro",
+  "transform.layout": "free",
 
   // Shadows
-  shadow: "pro",
+  shadow: "free",
 
   // Borders
-  border: "pro",
+  border: "free",
 
   // Elements
-  "elements.annotations": "pro",
-  "elements.text": "pro",
-  "elements.assets": "pro",
+  "elements.annotations": "free",
+  "elements.text": "free",
+  "elements.assets": "free",
 
   // Animation
   animate: "pro",
@@ -225,7 +225,7 @@ export const PRO_FEATURES: string[] = [
   "Everything in Free, plus:",
   "PNG, JPEG & WebP up to 8K",
   "Premium iPhone, MacBook & iPad frames",
-  "3D tilt, lighting, grain & borders",
+  "3D tilt",
   "Social presets + custom ratios",
   "Animation timeline + video export",
   "Cloud sync across devices",
