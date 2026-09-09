@@ -46,3 +46,5 @@ supabase/.temp
 
 recover.js
 roadmap_note.md
+
+!.env.example
